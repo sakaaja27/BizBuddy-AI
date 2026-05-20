@@ -10,12 +10,20 @@ import axios from 'axios';
 
 axios.defaults.baseURL = 'http://localhost:5000/api';
 
+// Interceptor to always attach token to every request before it is sent
+axios.interceptors.request.use((config) => {
+  const token = useAuthStore.getState().token;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 const App = () => {
   const { token, updateUser, logout } = useAuthStore();
 
   useEffect(() => {
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       axios.get('/auth/me')
         .then(res => updateUser(res.data))
         .catch(() => logout());
