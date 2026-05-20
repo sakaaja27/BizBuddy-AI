@@ -2,6 +2,7 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { OAuth2Client } = require('google-auth-library');
+const Business = require('../models/Business');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -56,12 +57,14 @@ const loginUser = async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && user.password && (await bcrypt.compare(password, user.password))) {
+      const business = await Business.findOne({ userId: user._id });
       res.json({
         _id: user.id,
         name: user.name,
         email: user.email,
         token: generateToken(user._id),
-        isOnboardingComplete: user.isOnboardingComplete
+        isOnboardingComplete: user.isOnboardingComplete,
+        businessName: business ? business.businessName : null
       });
     } else {
       res.status(401).json({ message: 'Email atau password salah' });
@@ -73,7 +76,11 @@ const loginUser = async (req, res) => {
 
 const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user.id).lean();
+    const business = await Business.findOne({ userId: req.user.id });
+    if (business && user) {
+      user.businessName = business.businessName;
+    }
     res.json(user);
   } catch (error) {
     res.status(500).json({ message: 'Terjadi kesalahan pada server' });
@@ -107,13 +114,16 @@ const googleLogin = async (req, res) => {
       });
     }
 
+    const business = await Business.findOne({ userId: user._id });
+
     res.json({
       _id: user.id,
       name: user.name,
       email: user.email,
       avatar: user.avatar,
       token: generateToken(user._id),
-      isOnboardingComplete: user.isOnboardingComplete
+      isOnboardingComplete: user.isOnboardingComplete,
+      businessName: business ? business.businessName : null
     });
 
   } catch (error) {

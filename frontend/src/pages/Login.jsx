@@ -73,7 +73,7 @@ const Login = () => {
               Kelola Bisnis<br/>Lebih Cerdas dengan AI
             </h1>
             <p className="text-white/80 mt-6 text-lg max-w-md">
-              Order, Review, Stok — semua dalam satu dashboard. Solusi UMKM modern untuk berkembang lebih cepat tanpa repot.
+              Order, Review, Stok - semua dalam satu dashboard. Solusi UMKM modern untuk berkembang lebih cepat tanpa repot.
             </p>
             <button className="mt-8 bg-primary hover:bg-orange-600 text-white font-medium py-3 px-8 rounded-full transition-all duration-300 transform hover:scale-105 shadow-lg shadow-primary/30">
               Mulai Gratis Sekarang

@@ -45,7 +45,7 @@ const StockStatusCard = ({ stockData }) => {
             <div key={index} className="flex flex-col gap-2">
               <div className="flex justify-between items-center">
                 <span className={`text-sm font-semibold ${isCritical ? 'text-red-600' : 'text-gray-700'}`}>
-                  {item.name} — {item.stock} {item.category === 'Minuman' && item.stock < 100 ? 'Liter' : 'pcs'}
+                  {item.name} - {item.stock} {item.category === 'Minuman' && item.stock < 100 ? 'Liter' : 'pcs'}
                 </span>
                 <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full ${badgeClass}`}>
                   {statusBadge}

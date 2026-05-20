@@ -257,7 +257,7 @@ const Onboarding = () => {
         {step === 3 && (
           <div className="animate-fade-in">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Tambah produk pertama kamu! 🎉</h1>
-            <p className="text-gray-500 mb-8">Opsional — kamu bisa menambahkan produk nanti</p>
+            <p className="text-gray-500 mb-8">Opsional - kamu bisa menambahkan produk nanti</p>
 
             <div className="bg-gray-50 p-6 rounded-2xl border border-gray-100 mb-8 space-y-5">
               <div>

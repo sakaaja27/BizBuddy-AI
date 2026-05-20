@@ -17,7 +17,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     // Update page title
-    document.title = "Dashboard — BizBuddy AI";
+    document.title = "Dashboard - BizBuddy AI";
 
     const fetchDashboardData = async () => {
       try {
@@ -78,10 +78,10 @@ const Dashboard = () => {
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold text-gray-900 mb-1">
+            <h1 className="text-3xl font-medium text-gray-900 mb-1">
               Selamat Datang, {getFirstName(user?.name)} 👋
             </h1>
-            <p className="text-gray-500 font-medium">Berikut adalah ringkasan bisnis Anda hari ini.</p>
+            <p className="text-gray-500 font-light">Berikut adalah ringkasan bisnis Anda hari ini.</p>
           </div>
           <div className="flex items-center bg-white px-4 py-2 rounded-lg border border-gray-100 shadow-sm shadow-gray-100/50">
             <Calendar size={18} className="text-primary mr-2" />
@@ -99,7 +99,7 @@ const Dashboard = () => {
             trendValue="+12% vs kemarin"
             iconColorClass="text-primary"
             iconBgClass="bg-orange-100"
-            borderClass="border-t-primary"
+            borderClass="border-t-4 border-t-orange-600"
           />
           <StatCard 
             label="Pendapatan Hari Ini"
@@ -109,7 +109,7 @@ const Dashboard = () => {
             trendValue="+8.5% vs kemarin"
             iconColorClass="text-secondary"
             iconBgClass="bg-blue-100"
-            borderClass="border-t-secondary"
+            borderClass="border-t-4 border-t-indigo-500"
           />
           <StatCard 
             label="Stok Menipis"
@@ -119,7 +119,7 @@ const Dashboard = () => {
             trendValue="Butuh perhatian segera"
             iconColorClass="text-red-600"
             iconBgClass="bg-red-100"
-            borderClass="border-red-300 border-2"
+            borderClass="border-t-4 border-t-red-500"
             alert={true}
           />
           <StatCard 
@@ -130,7 +130,7 @@ const Dashboard = () => {
             trendValue={`Sangat Baik (${stats.totalReviews} ulasan baru)`}
             iconColorClass="text-yellow-500"
             iconBgClass="bg-yellow-100"
-            borderClass="border-t-yellow-400"
+            borderClass="border-t-4 border-t-yellow-500"
           />
         </div>
 

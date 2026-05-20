@@ -83,7 +83,7 @@ const Register = () => {
               Kelola Bisnis<br/>Lebih Cerdas dengan AI
             </h1>
             <p className="text-white/80 mt-6 text-lg max-w-md">
-              Order, Review, Stok — semua dalam satu dashboard. Solusi UMKM modern untuk berkembang lebih cepat tanpa repot.
+              Order, Review, Stok - semua dalam satu dashboard. Solusi UMKM modern untuk berkembang lebih cepat tanpa repot.
             </p>
           </div>
 
