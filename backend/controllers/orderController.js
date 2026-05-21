@@ -109,6 +109,41 @@ const updateOrderStatus = async (req, res) => {
   }
 };
 
+// @desc    Update order
+// @route   PUT /api/orders/:id
+// @access  Private
+const updateOrder = async (req, res) => {
+  try {
+    const { customerName, orderType, tableNumber, address, items, notes } = req.body;
+    
+    // Calculate totalAmount if not provided or to ensure safety
+    let totalAmount = 0;
+    const processedItems = items.map(item => {
+      const subtotal = item.qty * item.price;
+      totalAmount += subtotal;
+      return {
+        ...item,
+        subtotal
+      };
+    });
+
+    const order = await Order.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id },
+      { customerName, orderType, tableNumber, address, items: processedItems, totalAmount, notes },
+      { new: true }
+    );
+
+    if (!order) {
+      return res.status(404).json({ message: 'Pesanan tidak ditemukan' });
+    }
+
+    res.json(order);
+  } catch (error) {
+    console.error('Error updating order:', error);
+    res.status(500).json({ message: 'Gagal mengupdate pesanan' });
+  }
+};
+
 // @desc    Delete order
 // @route   DELETE /api/orders/:id
 // @access  Private
@@ -215,6 +250,7 @@ const parseAIOrder = async (req, res) => {
 module.exports = {
   getOrders,
   createOrder,
+  updateOrder,
   updateOrderStatus,
   deleteOrder,
   parseAIOrder

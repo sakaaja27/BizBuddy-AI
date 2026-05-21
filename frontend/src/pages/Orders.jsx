@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
-import { Package, Plus, Sparkles, ArrowRight, Search, List, Grid, GripVertical, Loader2, X, Check, Trash2 } from 'lucide-react';
+import { Package, Plus, Sparkles, ArrowRight, Search, List, Grid, GripVertical, Loader2, X, Check, Trash2, Edit2 } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -18,6 +18,7 @@ const Orders = () => {
   
   // Manual Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingOrderId, setEditingOrderId] = useState(null);
   const [newOrder, setNewOrder] = useState({
     customerName: '',
     orderType: 'meja',
@@ -28,6 +29,7 @@ const Orders = () => {
   });
   const [selectedProductId, setSelectedProductId] = useState('');
   const [selectedQty, setSelectedQty] = useState(1);
+  const [deleteOrderId, setDeleteOrderId] = useState(null);
   
   const [filter, setFilter] = useState('Semua');
   const [searchQuery, setSearchQuery] = useState('');
@@ -115,6 +117,54 @@ const Orders = () => {
     setNewOrder({ ...newOrder, items: newItems });
   };
 
+  const openAddModal = () => {
+    setEditingOrderId(null);
+    setNewOrder({
+      customerName: '',
+      orderType: 'meja',
+      tableNumber: '',
+      address: '',
+      items: [],
+      notes: ''
+    });
+    setSelectedProductId('');
+    setSelectedQty(1);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (order) => {
+    setEditingOrderId(order._id);
+    setNewOrder({
+      customerName: order.customerName,
+      orderType: order.orderType || 'meja',
+      tableNumber: order.tableNumber || '',
+      address: order.address || '',
+      items: order.items,
+      notes: order.notes || ''
+    });
+    setSelectedProductId('');
+    setSelectedQty(1);
+    setIsModalOpen(true);
+  };
+
+  const promptDeleteOrder = (id) => {
+    setDeleteOrderId(id);
+  };
+
+  const executeDeleteOrder = async () => {
+    if (!deleteOrderId) return;
+    try {
+      await axios.delete(`/orders/${deleteOrderId}`);
+      setOrders(orders.filter(o => o._id !== deleteOrderId));
+      toast.success('Pesanan berhasil dihapus');
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast.error('Gagal menghapus pesanan');
+    } finally {
+      setDeleteOrderId(null);
+    }
+  };
+
   const handleManualSubmit = async () => {
     if (!newOrder.customerName) {
       toast.error('Nama pelanggan wajib diisi');
@@ -134,21 +184,19 @@ const Orders = () => {
     }
 
     try {
-      const { data } = await axios.post('/orders', newOrder);
-      setOrders([data, ...orders]);
+      if (editingOrderId) {
+        const { data } = await axios.put(`/orders/${editingOrderId}`, newOrder);
+        setOrders(orders.map(o => (o._id === editingOrderId ? data : o)));
+        toast.success('Pesanan berhasil diperbarui!');
+      } else {
+        const { data } = await axios.post('/orders', newOrder);
+        setOrders([data, ...orders]);
+        toast.success('Pesanan berhasil ditambahkan!');
+      }
       setIsModalOpen(false);
-      setNewOrder({
-        customerName: '',
-        orderType: 'meja',
-        tableNumber: '',
-        address: '',
-        items: [],
-        notes: ''
-      });
-      toast.success('Pesanan berhasil ditambahkan ke Pending!');
     } catch (error) {
-      console.error('Error creating manual order:', error);
-      toast.error('Gagal menambahkan pesanan manual.');
+      console.error('Error submitting order:', error);
+      toast.error('Gagal menyimpan pesanan.');
     }
   };
 
@@ -213,7 +261,7 @@ const Orders = () => {
                     ref={provided.innerRef}
                     {...provided.draggableProps}
                     {...provided.dragHandleProps}
-                    className={`bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-3 group
+                    className={`bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-3 group relative
                       ${snapshot.isDragging ? 'rotate-3 shadow-xl opacity-90 scale-[1.02] cursor-grabbing border-primary' : 'hover:shadow-md hover:scale-[1.01] transition-all cursor-grab'}`}
                   >
                     <div className="flex justify-between items-start mb-2">
@@ -221,7 +269,28 @@ const Orders = () => {
                         <span className="text-primary text-xs font-bold">{order.orderNumber}</span>
                         <span className="text-gray-400 text-[10px] font-medium">{new Date(order.createdAt).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}</span>
                       </div>
-                      <GripVertical size={16} className="text-gray-300 group-hover:text-gray-400 transition-colors" />
+                      
+                      <div className="flex items-center gap-1">
+                        {id === 'pending' && (
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center bg-white rounded-lg shadow-sm border border-gray-100 p-0.5">
+                            <button 
+                              onClick={() => openEditModal(order)}
+                              className="p-1 text-gray-400 hover:text-blue-500 rounded-md transition-colors"
+                              title="Edit Pesanan"
+                            >
+                              <Edit2 size={14} />
+                            </button>
+                            <button 
+                              onClick={() => promptDeleteOrder(order._id)}
+                              className="p-1 text-gray-400 hover:text-red-500 rounded-md transition-colors"
+                              title="Hapus Pesanan"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        )}
+                        <GripVertical size={16} className={`text-gray-300 group-hover:text-gray-400 transition-colors ${id === 'pending' && 'ml-1'}`} />
+                      </div>
                     </div>
                     
                     <h4 className="font-bold text-gray-900 text-sm mb-2">
@@ -270,7 +339,7 @@ const Orders = () => {
             </div>
           </div>
           <button 
-            onClick={() => setIsModalOpen(true)}
+            onClick={openAddModal}
             className="w-full md:w-auto bg-primary hover:bg-orange-600 text-white px-6 py-2.5 rounded-full font-bold shadow-lg shadow-primary/20 flex items-center justify-center transition-colors"
           >
             <Plus size={20} className="mr-2" />
@@ -344,7 +413,20 @@ const Orders = () => {
 
             <div className="flex gap-3 justify-end">
               <button onClick={() => setAiParsedResult(null)} className="px-5 py-2 text-gray-500 hover:bg-gray-100 font-semibold rounded-xl transition-colors text-sm">Batal</button>
-              <button className="px-5 py-2 border border-primary text-primary hover:bg-orange-50 font-bold rounded-xl transition-colors text-sm">Edit</button>
+              <button onClick={() => {
+                // Pre-fill the edit modal with AI result
+                setEditingOrderId(null);
+                setNewOrder({
+                  customerName: aiParsedResult.customerName,
+                  orderType: aiParsedResult.orderType,
+                  tableNumber: aiParsedResult.tableNumber || '',
+                  address: aiParsedResult.address || '',
+                  items: aiParsedResult.items,
+                  notes: aiParsedResult.notes || ''
+                });
+                setAiParsedResult(null);
+                setIsModalOpen(true);
+              }} className="px-5 py-2 border border-primary text-primary hover:bg-orange-50 font-bold rounded-xl transition-colors text-sm">Edit Manual</button>
               <button onClick={handleAiConfirm} className="px-5 py-2 bg-primary hover:bg-orange-600 text-white font-bold rounded-xl shadow-md shadow-primary/20 transition-colors text-sm flex items-center">
                 <Check size={16} className="mr-2" /> Konfirmasi Tambah
               </button>
@@ -408,12 +490,14 @@ const Orders = () => {
           <RecentOrdersTable orders={filteredOrders} />
         )}
 
-        {/* Manual Add Order Modal */}
+        {/* Manual Add/Edit Order Modal */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden animate-slide-up flex flex-col max-h-[90vh]">
               <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-gray-50/50">
-                <h3 className="font-bold text-gray-900 text-lg">Tambah Pesanan Manual</h3>
+                <h3 className="font-bold text-gray-900 text-lg">
+                  {editingOrderId ? 'Edit Pesanan' : 'Tambah Pesanan Manual'}
+                </h3>
                 <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:bg-gray-100 p-1.5 rounded-lg transition-colors"><X size={20} /></button>
               </div>
               
@@ -555,6 +639,35 @@ const Orders = () => {
                 <button onClick={handleManualSubmit} className="px-6 py-2.5 bg-primary hover:bg-orange-600 text-white font-bold rounded-xl transition-colors shadow-md shadow-primary/20 flex items-center">
                   <Check size={18} className="mr-2" /> Simpan Pesanan
                 </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteOrderId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-slide-up">
+              <div className="p-6 text-center">
+                <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Trash2 size={32} />
+                </div>
+                <h3 className="font-bold text-gray-900 text-lg mb-2">Hapus Pesanan?</h3>
+                <p className="text-gray-500 text-sm mb-6">Anda yakin ingin menghapus pesanan ini? Tindakan ini tidak dapat dibatalkan.</p>
+                <div className="flex gap-3">
+                  <button 
+                    onClick={() => setDeleteOrderId(null)} 
+                    className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors"
+                  >
+                    Batal
+                  </button>
+                  <button 
+                    onClick={executeDeleteOrder} 
+                    className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-md shadow-red-500/20 transition-colors"
+                  >
+                    Ya, Hapus
+                  </button>
+                </div>
               </div>
             </div>
           </div>

@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getOrders,
   createOrder,
+  updateOrder,
   updateOrderStatus,
   deleteOrder,
   parseAIOrder
@@ -19,6 +20,7 @@ router.route('/:id/status')
   .patch(protect, updateOrderStatus);
 
 router.route('/:id')
+  .put(protect, updateOrder)
   .delete(protect, deleteOrder);
 
 module.exports = router;
