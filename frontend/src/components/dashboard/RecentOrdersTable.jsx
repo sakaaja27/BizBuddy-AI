@@ -4,16 +4,26 @@ const RecentOrdersTable = ({ orders }) => {
   if (!orders || orders.length === 0) return null;
 
   const getStatusBadge = (status) => {
-    switch (status) {
-      case 'Pending':
+    switch (status.toLowerCase()) {
+      case 'pending':
         return <span className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-bold tracking-wide">Pending</span>;
-      case 'Processing':
+      case 'processing':
         return <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold tracking-wide">Processing</span>;
-      case 'Done':
+      case 'done':
         return <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold tracking-wide">Done</span>;
+      case 'cancelled':
+        return <span className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-xs font-bold tracking-wide">Cancelled</span>;
       default:
         return <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-xs font-bold tracking-wide">{status}</span>;
     }
+  };
+
+  const formatItems = (items) => {
+    if (typeof items === 'string') return items; // Fallback for old data
+    if (Array.isArray(items)) {
+      return items.map(item => `${item.qty}x ${item.productName}`).join(', ');
+    }
+    return '-';
   };
 
   return (
@@ -36,12 +46,12 @@ const RecentOrdersTable = ({ orders }) => {
           </thead>
           <tbody>
             {orders.map((order, index) => (
-              <tr key={order.orderId || index} className="hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0 group">
-                <td className="py-4 px-6 text-sm font-medium text-gray-900 whitespace-nowrap">{order.orderId}</td>
+              <tr key={order.orderNumber || order.orderId || index} className="hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0 group">
+                <td className="py-4 px-6 text-sm font-medium text-gray-900 whitespace-nowrap">{order.orderNumber || order.orderId}</td>
                 <td className="py-4 px-6 text-sm text-gray-600 whitespace-nowrap">{order.customerName}</td>
-                <td className="py-4 px-6 text-sm text-gray-600 max-w-[200px] truncate">{order.items}</td>
+                <td className="py-4 px-6 text-sm text-gray-600 max-w-[200px] truncate">{formatItems(order.items)}</td>
                 <td className="py-4 px-6 text-sm font-semibold text-gray-900 whitespace-nowrap">
-                  Rp {order.totalAmount.toLocaleString('id-ID')}
+                  Rp {order.totalAmount?.toLocaleString('id-ID')}
                 </td>
                 <td className="py-4 px-6 whitespace-nowrap">
                   {getStatusBadge(order.status)}

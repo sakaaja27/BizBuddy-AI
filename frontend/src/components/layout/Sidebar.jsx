@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BarChart2, Package, Wallet, Sparkles, HelpCircle, Settings } from 'lucide-react';
+import { LayoutDashboard, BarChart2, Package, Wallet, Sparkles, HelpCircle, Settings, ShoppingBag } from 'lucide-react';
 import useAuthStore from '../../store/useAuthStore';
 
 const Sidebar = () => {
@@ -9,6 +9,7 @@ const Sidebar = () => {
 
   const menuItems = [
     { name: 'Beranda', icon: LayoutDashboard, path: '/dashboard' },
+    { name: 'Pesanan', icon: ShoppingBag, path: '/dashboard/orders' },
     { name: 'Analitik', icon: BarChart2, path: '/analytics' },
     { name: 'Stok', icon: Package, path: '/stock' },
     { name: 'Keuangan', icon: Wallet, path: '/finance' },

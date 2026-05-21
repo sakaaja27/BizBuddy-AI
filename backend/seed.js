@@ -72,12 +72,66 @@ const seedDatabase = async () => {
 
     // 4. Create Recent Orders (Today)
     const today = new Date();
+    // Assuming the products we just created: 
+    // 0: Nasi Goreng (25k), 1: Ayam Penyet (20k), 2: Es Teh (5k), 3: Mie Tek-Tek (15k), 4: Sate (30k)
+    const pNasi = await Product.findOne({ name: 'Nasi Goreng Spesial' });
+    const pAyam = await Product.findOne({ name: 'Ayam Penyet' });
+    const pTeh = await Product.findOne({ name: 'Es Teh Manis' });
+    const pMie = await Product.findOne({ name: 'Mie Tek-Tek' });
+    const pSate = await Product.findOne({ name: 'Sate Ayam (10 tusuk)' });
+
     const ordersData = [
-      { orderId: '#ORD-0921', customerName: 'Siti Aminah', items: 'Nasi Goreng Spesial (x2)', totalAmount: 50000, status: 'Pending', createdAt: new Date(today.getTime() - 1000 * 60 * 10) },
-      { orderId: '#ORD-0920', customerName: 'Andi Supriadi', items: 'Mie Tek-Tek, Es Teh', totalAmount: 20000, status: 'Processing', createdAt: new Date(today.getTime() - 1000 * 60 * 30) },
-      { orderId: '#ORD-0919', customerName: 'Rina Herawati', items: 'Ayam Penyet + Nasi', totalAmount: 25000, status: 'Done', createdAt: new Date(today.getTime() - 1000 * 60 * 60) },
-      { orderId: '#ORD-0918', customerName: 'Ahmad Fauzi', items: 'Sate Ayam (20 tusuk)', totalAmount: 60000, status: 'Done', createdAt: new Date(today.getTime() - 1000 * 60 * 120) },
-      { orderId: '#ORD-0917', customerName: 'Dewi Lestari', items: 'Nasi Goreng Spesial', totalAmount: 25000, status: 'Done', createdAt: new Date(today.getTime() - 1000 * 60 * 180) },
+      { 
+        orderNumber: '#ORD-0921', 
+        customerName: 'Siti Aminah', 
+        orderType: 'meja',
+        tableNumber: '4',
+        items: [{ productId: pNasi._id, productName: pNasi.name, qty: 2, price: 25000, subtotal: 50000 }], 
+        totalAmount: 50000, 
+        status: 'pending', 
+        createdAt: new Date(today.getTime() - 1000 * 60 * 10) 
+      },
+      { 
+        orderNumber: '#ORD-0920', 
+        customerName: 'Andi Supriadi', 
+        orderType: 'bungkus',
+        items: [
+          { productId: pMie._id, productName: pMie.name, qty: 1, price: 15000, subtotal: 15000 },
+          { productId: pTeh._id, productName: pTeh.name, qty: 1, price: 5000, subtotal: 5000 }
+        ], 
+        totalAmount: 20000, 
+        status: 'processing', 
+        createdAt: new Date(today.getTime() - 1000 * 60 * 30) 
+      },
+      { 
+        orderNumber: '#ORD-0919', 
+        customerName: 'Rina Herawati', 
+        orderType: 'delivery',
+        address: 'Jl. Melati No 10',
+        items: [{ productId: pAyam._id, productName: pAyam.name, qty: 1, price: 25000, subtotal: 25000 }], 
+        totalAmount: 25000, 
+        status: 'done', 
+        createdAt: new Date(today.getTime() - 1000 * 60 * 60) 
+      },
+      { 
+        orderNumber: '#ORD-0918', 
+        customerName: 'Ahmad Fauzi', 
+        orderType: 'meja',
+        tableNumber: '1',
+        items: [{ productId: pSate._id, productName: pSate.name, qty: 2, price: 30000, subtotal: 60000 }], 
+        totalAmount: 60000, 
+        status: 'done', 
+        createdAt: new Date(today.getTime() - 1000 * 60 * 120) 
+      },
+      { 
+        orderNumber: '#ORD-0917', 
+        customerName: 'Dewi Lestari', 
+        orderType: 'bungkus',
+        items: [{ productId: pNasi._id, productName: pNasi.name, qty: 1, price: 25000, subtotal: 25000 }], 
+        totalAmount: 25000, 
+        status: 'done', 
+        createdAt: new Date(today.getTime() - 1000 * 60 * 180) 
+      },
     ];
 
     for (const o of ordersData) {

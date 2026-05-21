@@ -1,11 +1,11 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BarChart2, Package, Sparkles } from 'lucide-react';
+import { LayoutDashboard, BarChart2, Package, Sparkles, ShoppingBag } from 'lucide-react';
 
 const BottomNav = () => {
   const menuItems = [
     { name: 'Beranda', icon: LayoutDashboard, path: '/dashboard' },
-    { name: 'Analitik', icon: BarChart2, path: '/analytics' },
+    { name: 'Pesanan', icon: ShoppingBag, path: '/dashboard/orders' },
     { name: 'Stok', icon: Package, path: '/stock' },
     { name: 'Insights', icon: Sparkles, path: '/insights', isAi: true },
   ];
