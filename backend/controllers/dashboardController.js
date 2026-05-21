@@ -106,7 +106,7 @@ const getDashboardStats = async (req, res) => {
           if (responseText) {
             aiReportBody = responseText.replace(/\*/g, '').trim(); 
             
-            // Simpan ke cache selama 1 jam, TAPI HANYA untuk "dataSignature" ini
+            // Simpan ke cache selama  jam, TAPI HANYA untuk "dataSignature" ini
             aiReportCache.set(cacheKey, {
               reportBody: aiReportBody,
               expiresAt: now + 60 * 60 * 1000
