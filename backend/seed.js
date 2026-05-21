@@ -145,14 +145,72 @@ const seedDatabase = async () => {
 
     // 5. Create Sample Reviews
     const reviewsData = [
-      { customerName: 'Bambang', rating: 5, sentiment: 'Positif', comment: 'Rasa enak banget dan porsi pas!' },
-      { customerName: 'Sinta', rating: 4, sentiment: 'Positif', comment: 'Pelayanan cepat.' },
-      { customerName: 'Dodi', rating: 3, sentiment: 'Netral', comment: 'Rasa standar, harga lumayan.' },
-      { customerName: 'Lisa', rating: 5, sentiment: 'Positif', comment: 'Suka banget sama sate ayamnya.' },
-      { customerName: 'Agus', rating: 2, sentiment: 'Saran', comment: 'Sambalnya kurang pedas, mohon ditingkatkan.' },
-      { customerName: 'Tono', rating: 5, sentiment: 'Positif', comment: 'Mantap pokoknya.' },
-      { customerName: 'Yuni', rating: 4, sentiment: 'Positif', comment: 'Bersih dan enak.' },
-      { customerName: 'Eka', rating: 3, sentiment: 'Netral', comment: 'Biasa saja.' },
+      { 
+        customerName: 'Bambang S.', 
+        platform: 'gofood',
+        rating: 5, 
+        sentiment: 'positive', 
+        reviewText: 'Nasi gorengnya juara! Bumbunya pas, porsinya melimpah. Bakal langganan terus sih ini.',
+        aiAnalyzed: false
+      },
+      { 
+        customerName: 'Sinta', 
+        platform: 'shopee',
+        rating: 4, 
+        sentiment: 'positive', 
+        reviewText: 'Pengiriman cepat banget, rasa juga oke. Cuma porsi ayamnya agak kecil dibanding biasanya.',
+        aiAnalyzed: false
+      },
+      { 
+        customerName: 'Dodi', 
+        platform: 'google',
+        rating: 3, 
+        sentiment: 'neutral', 
+        reviewText: 'Tempatnya lumayan nyaman, rasa standar aja sih. Harganya standar warung pada umumnya.',
+        aiAnalyzed: false
+      },
+      { 
+        customerName: 'Lisa M.', 
+        platform: 'tokopedia',
+        rating: 5, 
+        sentiment: 'positive', 
+        reviewText: 'Suka banget sama sate ayamnya, bumbu kacangnya legit. Packaging juga rapi dan aman.',
+        aiAnalyzed: false
+      },
+      { 
+        customerName: 'Agus P.', 
+        platform: 'gofood',
+        rating: 2, 
+        sentiment: 'negative', 
+        reviewText: 'Ayamnya keras banget susah dikunyah. Tolong diperhatikan lagi kualitas masakannya. Kecewa banget.',
+        aiAnalyzed: true,
+        suggestedReply: 'Halo Kak Agus, mohon maaf atas ketidaknyamanannya terkait ayam yang keras. Kami akan segera mengevaluasi proses memasak di dapur agar kejadian ini tidak terulang. Silakan hubungi WA kami ya Kak 🙏'
+      },
+      { 
+        customerName: 'Tono', 
+        platform: 'manual',
+        rating: 5, 
+        sentiment: 'positive', 
+        reviewText: 'Selalu mantap kalau makan di sini. Teh manisnya juga enak kerasa banget tehnya.',
+        aiAnalyzed: false
+      },
+      { 
+        customerName: 'Yuni Astuti', 
+        platform: 'google',
+        rating: 4, 
+        sentiment: 'positive', 
+        reviewText: 'Warungnya bersih, pelayanan ramah. Makanannya enak cuma agak lama keluarnya kalau lagi rame.',
+        aiAnalyzed: false
+      },
+      { 
+        customerName: 'Eka', 
+        platform: 'shopee',
+        rating: 3, 
+        sentiment: 'negative', 
+        reviewText: 'Pesan mie tek-tek tapi mienya kelembekan. Terus sambalnya dikit banget padahal udah nulis minta pedes.',
+        aiAnalyzed: true,
+        suggestedReply: 'Halo Kak Eka, maaf ya mienya kurang pas seleranya. Kami siap bantu periksa detail pesanannya untuk kompensasi. Boleh chat admin untuk dibantu proses lebih lanjut ya Kak 🙏'
+      },
     ];
 
     for (const r of reviewsData) {

@@ -5,6 +5,7 @@ import Register from './pages/Register';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import Orders from './pages/Orders';
+import Reviews from './pages/Reviews';
 import ProtectedRoute from './components/ProtectedRoute';
 import useAuthStore from './store/useAuthStore';
 import axios from 'axios';
@@ -60,6 +61,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <Orders />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/reviews" 
+          element={
+            <ProtectedRoute>
+              <Reviews />
             </ProtectedRoute>
           } 
         />

@@ -46,7 +46,7 @@ const getDashboardStats = async (req, res) => {
       .limit(5);
 
     // 5. Sentiment Distribution
-    const sentimentCounts = { Positif: 0, Netral: 0, Saran: 0 };
+    const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
     reviews.forEach(rev => {
       if (sentimentCounts[rev.sentiment] !== undefined) {
         sentimentCounts[rev.sentiment]++;
@@ -56,9 +56,9 @@ const getDashboardStats = async (req, res) => {
     // Calculate percentages
     const totalReviews = reviews.length || 1; // avoid division by zero
     const sentiment = {
-      Positif: Math.round((sentimentCounts.Positif / totalReviews) * 100),
-      Netral: Math.round((sentimentCounts.Netral / totalReviews) * 100),
-      Saran: Math.round((sentimentCounts.Saran / totalReviews) * 100),
+      positive: Math.round((sentimentCounts.positive / totalReviews) * 100),
+      neutral: Math.round((sentimentCounts.neutral / totalReviews) * 100),
+      negative: Math.round((sentimentCounts.negative / totalReviews) * 100),
     };
 
     // 6. Stock Status List
@@ -94,7 +94,7 @@ const getDashboardStats = async (req, res) => {
             - Total Pesanan: ${totalOrders}
             - Pendapatan: Rp ${revenueToday}
             - Stok Menipis: ${lowStockCount} item (termasuk: ${criticalStockNames || 'Tidak ada'})
-            - Sentimen Pelanggan: Positif ${sentiment.Positif}%, Netral ${sentiment.Netral}%, Saran ${sentiment.Saran}%
+            - Sentimen Pelanggan: Positif ${sentiment.positive}%, Netral ${sentiment.neutral}%, Negatif ${sentiment.negative}%
           `;
   
           const chatCompletion = await groq.chat.completions.create({

@@ -13,7 +13,7 @@ const Sidebar = () => {
     { name: 'Analitik', icon: BarChart2, path: '/analytics' },
     { name: 'Stok', icon: Package, path: '/stock' },
     { name: 'Keuangan', icon: Wallet, path: '/finance' },
-    { name: 'AI Insights', icon: Sparkles, path: '/insights', isAi: true },
+    { name: 'AI Insights', icon: Sparkles, path: '/dashboard/reviews', isAi: true },
     { name: 'Bantuan', icon: HelpCircle, path: '/help' },
   ];
 
