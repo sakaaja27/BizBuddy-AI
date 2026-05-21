@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BarChart2, Package, Wallet, Sparkles, HelpCircle, Settings, ShoppingBag } from 'lucide-react';
+import { LayoutDashboard, BarChart2, Package, Wallet, Sparkles, HelpCircle, Settings, ShoppingBag, Bot } from 'lucide-react';
 import useAuthStore from '../../store/useAuthStore';
 
 const Sidebar = () => {
@@ -13,7 +13,8 @@ const Sidebar = () => {
     { name: 'Analitik', icon: BarChart2, path: '/analytics' },
     { name: 'Stok', icon: Package, path: '/stock' },
     { name: 'Keuangan', icon: Wallet, path: '/finance' },
-    { name: 'AI Insights', icon: Sparkles, path: '/dashboard/reviews', isAi: true },
+    { name: 'Review Intelligence', icon: Sparkles, path: '/dashboard/reviews' },
+    { name: 'AI Assistant', icon: Bot, path: '/dashboard/ai-assistant', isAi: true },
     { name: 'Bantuan', icon: HelpCircle, path: '/help' },
   ];
 
@@ -46,13 +47,16 @@ const Sidebar = () => {
             {({ isActive }) => (
               <>
                 {isActive && (
-                  <div className="absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 bg-primary rounded-r-full"></div>
+                  <div className={`absolute left-0 top-1/2 transform -translate-y-1/2 w-1 h-8 rounded-r-full ${item.isAi ? 'bg-orange-500' : 'bg-primary'}`}></div>
                 )}
                 <item.icon 
                   size={20} 
-                  className={`mr-3 ${item.isAi ? (isActive ? 'text-primary' : 'text-orange-400') : ''} ${isActive ? 'text-primary' : 'text-gray-400 group-hover:text-gray-600'}`} 
+                  className={`mr-3 ${item.isAi ? (isActive ? 'text-orange-500' : 'text-orange-400') : (isActive ? 'text-primary' : 'text-gray-400 group-hover:text-gray-600')}`} 
                 />
-                <span className={`font-medium ${item.isAi && !isActive ? 'text-orange-500 font-semibold' : ''}`}>{item.name}</span>
+                <span className={`font-medium ${item.isAi ? (isActive ? 'text-orange-600 font-bold' : 'text-orange-500 font-semibold') : ''}`}>{item.name}</span>
+                {item.isAi && (
+                  <span className="ml-auto w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                )}
               </>
             )}
           </NavLink>

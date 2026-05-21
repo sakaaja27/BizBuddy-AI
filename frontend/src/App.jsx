@@ -6,6 +6,7 @@ import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import Orders from './pages/Orders';
 import Reviews from './pages/Reviews';
+import AiAssistant from './pages/AiAssistant';
 import ProtectedRoute from './components/ProtectedRoute';
 import useAuthStore from './store/useAuthStore';
 import axios from 'axios';
@@ -69,6 +70,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <Reviews />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/ai-assistant" 
+          element={
+            <ProtectedRoute>
+              <AiAssistant />
             </ProtectedRoute>
           } 
         />

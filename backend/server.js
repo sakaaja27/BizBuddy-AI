@@ -11,6 +11,7 @@ const dashboardRoutes = require('./routes/dashboardRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const productRoutes = require('./routes/productRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const aiRoutes = require('./routes/aiRoutes');
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/ai', aiRoutes);
 
 const PORT = process.env.PORT || 5000;
 
