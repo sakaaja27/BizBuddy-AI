@@ -6,8 +6,7 @@ const {
   updateProduct,
   deleteProduct,
   restockProduct,
-  getStockMovements,
-  getRestockAdvice
+  getStockMovements
 } = require('../controllers/productController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -16,7 +15,6 @@ router.route('/')
   .post(protect, createProduct);
 
 router.get('/movements', protect, getStockMovements);
-router.get('/restock-advice', protect, getRestockAdvice);
 
 router.route('/:id')
   .put(protect, updateProduct)

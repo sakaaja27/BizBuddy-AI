@@ -30,7 +30,7 @@ const RecentOrdersTable = ({ orders }) => {
     <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
       <div className="p-6 border-b border-gray-50 flex justify-between items-center">
         <h3 className="text-lg font-bold text-gray-900">Pesanan Terbaru</h3>
-        <a href="#" className="text-primary text-sm font-semibold hover:text-orange-600 transition-colors">Lihat Semua</a>
+        <a href="/dashboard/orders" className="text-primary text-sm font-semibold hover:text-orange-600 transition-colors">Lihat Semua</a>
       </div>
       
       <div className="overflow-x-auto">

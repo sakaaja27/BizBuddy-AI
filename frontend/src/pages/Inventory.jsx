@@ -10,8 +10,12 @@ const Inventory = () => {
   const { user } = useAuthStore();
   const [products, setProducts] = useState([]);
   const [movements, setMovements] = useState([]);
-  const [restockAdvice, setRestockAdvice] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('Semua');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isUploading, setIsUploading] = useState(false);
+  const itemsPerPage = 6;
 
   // Modals state
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
@@ -34,14 +38,12 @@ const Inventory = () => {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [prodRes, moveRes, advRes] = await Promise.all([
+      const [prodRes, moveRes] = await Promise.all([
         axios.get('/products'),
-        axios.get('/products/movements?days=7'),
-        axios.get('/products/restock-advice')
+        axios.get('/products/movements?days=7')
       ]);
       setProducts(prodRes.data);
       setMovements(moveRes.data);
-      setRestockAdvice(advRes.data);
     } catch (error) {
       console.error('Error fetching inventory data:', error);
       toast.error('Gagal memuat data inventori');
@@ -140,6 +142,57 @@ const Inventory = () => {
     }
   };
 
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    setIsUploading(true);
+    try {
+      const { data } = await axios.post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      // API returns something like "/uploads/img-123.jpg"
+      // Since axios base URL is /api, the upload route is /api/upload.
+      // Wait, we need to ensure the image URL works. We'll set the path.
+      // If backend is on port 5000 and we proxy it, /uploads might not be proxied correctly by Vite unless configured. 
+      // Assuming it's configured or using absolute URL if needed, but local path is usually fine if proxy is setup.
+      // Let's just use the returned path.
+      setProductForm(prev => ({ ...prev, imageUrl: data }));
+      toast.success('Gambar berhasil diunggah');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Gagal mengunggah gambar');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const filteredProducts = products.filter(p => {
+    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = selectedCategory === 'Semua' || p.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const categories = ['Semua', ...new Set(products.map(p => p.category))];
+
+  const getImageUrl = (url) => {
+    if (!url) return '';
+    if (url.startsWith('/uploads')) {
+      return `http://localhost:5000${url}`;
+    }
+    return url;
+  };
+
   return (
     <DashboardLayout>
       <div className="p-4 md:p-8 max-w-7xl mx-auto pb-24">
@@ -155,13 +208,22 @@ const Inventory = () => {
               <p className="text-gray-500 text-sm">Pantau pergerakan stok harian Anda secara real-time.</p>
             </div>
           </div>
-          <button 
-            onClick={() => handleOpenProductModal()}
-            className="flex items-center bg-primary hover:bg-orange-600 text-white font-bold py-2.5 px-4 rounded-xl transition-colors shadow-md shadow-primary/20 w-full md:w-auto justify-center"
-          >
-            <Plus size={18} className="mr-2" />
-            Tambah Produk
-          </button>
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <input 
+              type="text" 
+              placeholder="Cari produk..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="px-4 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm w-full md:w-64"
+            />
+            <button 
+              onClick={() => handleOpenProductModal()}
+              className="flex items-center bg-primary hover:bg-orange-600 text-white font-bold py-2.5 px-4 rounded-xl transition-colors shadow-md shadow-primary/20 justify-center shrink-0"
+            >
+              <Plus size={18} className="mr-2" />
+              Tambah Produk
+            </button>
+          </div>
         </div>
 
         {/* Alert Banner */}
@@ -182,40 +244,31 @@ const Inventory = () => {
           </div>
         )}
 
-        {/* AI Restock Advisor */}
-        {restockAdvice.length > 0 && (
-          <div id="ai-advisor" className="mb-8">
-            <div className="flex items-center gap-2 mb-4">
-              <Lightbulb size={20} className="text-orange-500" />
-              <h2 className="text-lg font-bold text-gray-900">Saran Restock AI 💡</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {restockAdvice.map((advice, idx) => (
-                <div key={idx} className="bg-gradient-to-br from-orange-50 to-white border border-orange-100 rounded-2xl p-5 shadow-sm">
-                  <h3 className="font-bold text-gray-900 mb-1">{advice.product}</h3>
-                  <div className="flex justify-between items-end mb-3">
-                    <p className="text-sm text-gray-500">Sisa: <span className="font-bold text-red-500">{advice.currentStock}</span></p>
-                    <div className="text-right">
-                      <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Rekomendasi Beli</p>
-                      <p className="text-lg font-black text-primary">+{advice.recommendedRestock}</p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-orange-800 bg-orange-100/50 p-2 rounded-lg italic">"{advice.reason}"</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+
 
         {/* Stock Grid */}
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Daftar Produk</h2>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+          <h2 className="text-lg font-bold text-gray-900">Daftar Produk</h2>
+          <div className="flex overflow-x-auto hide-scrollbar gap-2 max-w-full">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => { setSelectedCategory(cat); setCurrentPage(1); }}
+                className={`px-4 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-colors ${selectedCategory === cat ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
         
         {isLoading ? (
           <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {products.map(product => {
-              const status = getStockStatus(product.stock, product.minStock);
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+              {paginatedProducts.map(product => {
+                const status = getStockStatus(product.stock, product.minStock);
               const progressWidth = Math.min(100, (product.stock / (product.minStock * 4)) * 100);
               
               return (
@@ -253,7 +306,7 @@ const Inventory = () => {
                   <div className="flex gap-4 mb-4 mt-2">
                     <div className="w-16 h-16 bg-gray-50 rounded-xl flex items-center justify-center border border-gray-100 shrink-0 overflow-hidden">
                       {product.imageUrl ? (
-                        <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" />
+                        <img src={getImageUrl(product.imageUrl)} alt={product.name} className="w-full h-full object-cover" />
                       ) : (
                         <Package size={24} className="text-gray-300" />
                       )}
@@ -277,7 +330,31 @@ const Inventory = () => {
                 </div>
               );
             })}
-          </div>
+            </div>
+            
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-center items-center gap-2 mb-8">
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-4 py-2 rounded-xl text-sm font-bold bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                >
+                  Sebelumnya
+                </button>
+                <span className="text-sm font-semibold text-gray-600 mx-2">
+                  Halaman {currentPage} dari {totalPages}
+                </span>
+                <button 
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-4 py-2 rounded-xl text-sm font-bold bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+                >
+                  Selanjutnya
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Stock Movement Chart */}
@@ -362,8 +439,23 @@ const Inventory = () => {
                 <p className="text-xs text-gray-500 italic mt-1">AI akan memberi peringatan jika stok di bawah angka minimum alert.</p>
 
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">URL Gambar (Opsional)</label>
-                  <input value={productForm.imageUrl} onChange={e => setProductForm({...productForm, imageUrl: e.target.value})} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm" placeholder="https://..." />
+                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Gambar Produk (Upload / URL)</label>
+                  <div className="flex gap-2">
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={isUploading}
+                      className="w-1/2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100" 
+                    />
+                    <input 
+                      value={productForm.imageUrl} 
+                      onChange={e => setProductForm({...productForm, imageUrl: e.target.value})} 
+                      className="w-1/2 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm" 
+                      placeholder="Atau paste URL gambar..." 
+                    />
+                  </div>
+                  {isUploading && <p className="text-xs text-orange-500 mt-1">Sedang mengunggah...</p>}
                 </div>
               </div>
               <div className="px-6 py-4 border-t border-gray-100 flex justify-end gap-3 bg-gray-50/50">

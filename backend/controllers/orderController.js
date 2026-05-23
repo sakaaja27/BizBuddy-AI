@@ -147,6 +147,27 @@ const updateOrderStatus = async (req, res) => {
       }
     }
 
+    // Processing -> Pending : Return Stock (Correction)
+    if (previousStatus === 'processing' && status === 'pending') {
+      for (const item of order.items) {
+        if (!item.productId) continue;
+        const product = await Product.findById(item.productId);
+        if (product) {
+          product.stock += item.qty;
+          await product.save();
+
+          await StockMovement.create({
+            businessId: order.businessId,
+            productId: product._id,
+            productName: product.name,
+            type: 'in', // Returning stock
+            quantity: item.qty,
+            notes: `Pengembalian stok dari pesanan dikoreksi (Order: ${order.customerName})`
+          });
+        }
+      }
+    }
+
     // Processing/Done -> Cancelled : Reverse Stock
     if ((previousStatus === 'processing' || previousStatus === 'done') && status === 'cancelled') {
       for (const item of order.items) {
@@ -271,11 +292,12 @@ ${JSON.stringify(menuContext)}
 
 Teks pesanan: "${text}"
 
-ATURAN PARSING:
-1. Cocokkan nama item pesanan dengan nama di menu (fuzzy match, misalnya "nasi goreng" cocok dengan "Nasi Goreng Spesial").
-2. Jika item pesanan TIDAK ada kemiripannya di menu sama sekali, masukkan nama item tersebut ke dalam array "notFound".
-3. Jika stok di menu kurang dari jumlah yang dipesan (qty > stock), masukkan ke array "insufficientStock" dengan struktur { name, requested, available }.
-4. Ekstrak data pelanggan dan meja.
+ATURAN PARSING SANGAT KETAT:
+1. PENTING: JIKA item yang diminta pengguna TIDAK TERDAFTAR SECARA PERSIS atau tidak memiliki kaitan logis dengan nama di "Menu yang tersedia", JANGAN PERNAH berasumsi atau menggantinya dengan menu lain. Anda WAJIB memasukkannya ke dalam array "notFound" dan JANGAN memasukkannya ke dalam array "items".
+2. Contoh: Jika user memesan "sepatu" atau "baju" tapi di menu hanya ada "Nasi Goreng", masukkan "sepatu" ke "notFound". Jangan paksa memasukkan ke item.
+3. Hanya lakukan fuzzy match jika memang variasi nama wajar (misal "nasgor" -> "Nasi Goreng Spesial").
+4. Jika stok di menu kurang dari jumlah yang dipesan (qty > stock), masukkan ke array "insufficientStock" dengan struktur { name, requested, available }.
+5. Ekstrak data pelanggan dan meja.
 
 KEMBALIKAN HANYA VALID JSON dengan struktur kaku ini:
 {
@@ -312,6 +334,7 @@ KEMBALIKAN HANYA VALID JSON dengan struktur kaku ini:
 
     try {
       parsedOrder = JSON.parse(responseContent);
+      
     } catch (parseError) {
       console.error("Failed to parse AI response as JSON:", responseContent);
       return res.status(500).json({ message: 'AI gagal menghasilkan format data yang valid' });

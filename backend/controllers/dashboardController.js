@@ -23,7 +23,36 @@ const getDashboardStats = async (req, res) => {
     });
 
     const totalOrders = todayOrders.length;
-    const revenueToday = todayOrders.reduce((sum, order) => sum + order.totalAmount, 0);
+    // Revenue is only for completed orders
+    const revenueToday = todayOrders
+      .filter(o => o.status === 'done')
+      .reduce((sum, order) => sum + order.totalAmount, 0);
+
+    // Calculate Yesterday's Orders & Revenue for Trends
+    const startOfYesterday = new Date(startOfToday);
+    startOfYesterday.setDate(startOfYesterday.getDate() - 1);
+
+    const yesterdayOrders = await Order.find({
+      userId,
+      createdAt: { $gte: startOfYesterday, $lt: startOfToday }
+    });
+
+    const yesterdayTotalOrders = yesterdayOrders.length;
+    const yesterdayRevenue = yesterdayOrders
+      .filter(o => o.status === 'done')
+      .reduce((sum, order) => sum + order.totalAmount, 0);
+
+    // Calculate Trend Percentages
+    const calcTrend = (today, yesterday) => {
+      if (yesterday === 0) return today > 0 ? '+100%' : '0%';
+      const diff = ((today - yesterday) / yesterday) * 100;
+      return `${diff > 0 ? '+' : ''}${diff.toFixed(1)}%`;
+    };
+
+    const trends = {
+      orders: `${calcTrend(totalOrders, yesterdayTotalOrders)} vs kemarin`,
+      revenue: `${calcTrend(revenueToday, yesterdayRevenue)} vs kemarin`,
+    };
 
     // 2. Low Stock Items (Threshold < 15)
     const lowStockItems = await Product.find({
@@ -130,7 +159,8 @@ const getDashboardStats = async (req, res) => {
         revenueToday,
         lowStockCount,
         averageReview,
-        totalReviews: reviews.length
+        totalReviews: reviews.length,
+        trends
       },
       aiReport,
       stockStatus: allProducts,

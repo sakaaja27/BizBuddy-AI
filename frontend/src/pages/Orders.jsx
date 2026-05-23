@@ -31,6 +31,7 @@ const Orders = () => {
   const [selectedQty, setSelectedQty] = useState(1);
   const [deleteOrderId, setDeleteOrderId] = useState(null);
   const [stockErrorModal, setStockErrorModal] = useState({ isOpen: false, errorData: null, orderId: null, newStatus: null, orderIndex: null, oldStatus: null });
+  const [confirmDoneModal, setConfirmDoneModal] = useState({ isOpen: false, orderId: null });
   
   const [filter, setFilter] = useState('Semua');
   const [searchQuery, setSearchQuery] = useState('');
@@ -100,8 +101,8 @@ const Orders = () => {
       productId: product._id,
       productName: product.name,
       qty: parseInt(selectedQty, 10),
-      price: product.price,
-      subtotal: product.price * selectedQty
+      price: product.sellPrice,
+      subtotal: product.sellPrice * selectedQty
     };
 
     setNewOrder({
@@ -201,22 +202,15 @@ const Orders = () => {
     }
   };
 
-  const onDragEnd = async (result) => {
-    const { destination, source, draggableId } = result;
-    if (!destination) return;
-    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
-    
-    const newStatus = destination.droppableId;
-    
-    // Optimistic update
+  const processStatusChange = async (orderId, newStatus) => {
     const newOrders = Array.from(orders);
-    const orderIndex = newOrders.findIndex(o => o._id === draggableId);
+    const orderIndex = newOrders.findIndex(o => o._id === orderId);
     const oldStatus = newOrders[orderIndex].status;
     newOrders[orderIndex].status = newStatus;
     setOrders(newOrders);
 
     try {
-      const { data } = await axios.patch(`/orders/${draggableId}/status`, { status: newStatus });
+      const { data } = await axios.patch(`/orders/${orderId}/status`, { status: newStatus });
       if (data.stockAlerts && data.stockAlerts.length > 0) {
         toast.error(`⚠️ Stok ${data.stockAlerts.join(', ')} sekarang kritis!`, { duration: 5000, icon: '⚠️' });
       }
@@ -230,7 +224,7 @@ const Orders = () => {
         setStockErrorModal({
           isOpen: true,
           errorData: error.response.data,
-          orderId: draggableId,
+          orderId,
           newStatus,
           orderIndex,
           oldStatus
@@ -240,6 +234,35 @@ const Orders = () => {
         toast.error('Gagal mengupdate status pesanan.');
       }
     }
+  };
+
+  const onDragEnd = async (result) => {
+    const { destination, source, draggableId } = result;
+    if (!destination) return;
+    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
+    
+    // Cegah order yang sudah selesai dipindah lagi
+    if (source.droppableId === 'done') {
+      toast.error('Pesanan yang sudah selesai tidak dapat diubah statusnya!');
+      return;
+    }
+
+    const newStatus = destination.droppableId;
+    
+    // Minta konfirmasi jika dipindah ke selesai
+    if (newStatus === 'done') {
+      setConfirmDoneModal({ isOpen: true, orderId: draggableId });
+      return;
+    }
+
+    await processStatusChange(draggableId, newStatus);
+  };
+
+  const executeConfirmDone = async () => {
+    if (confirmDoneModal.orderId) {
+      await processStatusChange(confirmDoneModal.orderId, 'done');
+    }
+    setConfirmDoneModal({ isOpen: false, orderId: null });
   };
 
   const forceUpdateStatus = async () => {
@@ -270,7 +293,7 @@ const Orders = () => {
   const processingOrders = filteredOrders.filter(o => o.status === 'processing');
   const doneOrders = filteredOrders.filter(o => o.status === 'done');
 
-  const manualOrderTotal = newOrder.items.reduce((sum, item) => sum + item.subtotal, 0);
+  // const manualOrderTotal = newOrder.items.reduce((sum, item) => sum + item.subtotal, 0);
 
   const renderKanbanColumn = (title, id, items, headerBg, dotColor) => (
     <div className="flex-1 min-w-[280px] flex flex-col h-full">
@@ -362,6 +385,8 @@ const Orders = () => {
     </div>
   );
 
+  const manualOrderTotal = newOrder.items.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+
   return (
     <DashboardLayout>
       <div className="p-4 md:p-8 max-w-7xl mx-auto pb-24 md:pb-8">
@@ -417,12 +442,12 @@ const Orders = () => {
         </div>
 
         {/* AI Parse Result Preview */}
-        {aiParsedResult && (
+        {aiParsedResult && (!aiParsedResult.notFound || aiParsedResult.notFound.length === 0) && (
           <div className="bg-white border border-gray-100 rounded-2xl p-5 mb-8 shadow-sm animate-fade-in">
             <div className="flex justify-between items-start mb-4">
               <h3 className="font-bold text-gray-900 flex items-center">
                 <Check size={18} className="text-green-500 mr-2" />
-                Preview Pesanan dari AI
+                Preview Pesanan dari AI <span className="text-red-500 ml-2">(Cek Lagi Apakah Sudah Benar!)</span>
               </h3>
               <button onClick={() => setAiParsedResult(null)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
@@ -432,15 +457,6 @@ const Orders = () => {
               <div className="bg-yellow-50 text-yellow-800 text-sm p-3 rounded-xl mb-4 border border-yellow-200 flex items-center">
                 <AlertTriangle size={16} className="mr-2 shrink-0" />
                 AI kurang yakin dengan pesanan ini. Mohon periksa kembali.
-              </div>
-            )}
-            
-            {aiParsedResult.notFound && aiParsedResult.notFound.length > 0 && (
-              <div className="bg-red-50 text-red-800 text-sm p-3 rounded-xl mb-4 border border-red-200">
-                <div className="flex items-center font-bold mb-1"><AlertTriangle size={16} className="mr-2" /> Produk tidak ditemukan di menu:</div>
-                <ul className="list-disc pl-8">
-                  {aiParsedResult.notFound.map((item, i) => <li key={i}>{item}</li>)}
-                </ul>
               </div>
             )}
             
@@ -645,7 +661,7 @@ const Orders = () => {
                     >
                       <option value="">-- Pilih Produk --</option>
                       {products.map(p => (
-                        <option key={p._id} value={p._id}>{p.name} - Rp {p.price.toLocaleString('id-ID')}</option>
+                        <option key={p._id} value={p._id}>{p.name} - Rp {p.sellPrice.toLocaleString('id-ID')}</option>
                       ))}
                     </select>
                     <input 
@@ -779,6 +795,81 @@ const Orders = () => {
                   className="flex-1 py-2.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-md shadow-red-500/20 transition-colors"
                 >
                   Lanjutkan Anyway
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Not Found Modal */}
+      {aiParsedResult?.notFound && aiParsedResult.notFound.length > 0 && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-slide-up border-t-4 border-red-500">
+            <div className="p-6">
+              <div className="flex items-center text-red-500 mb-4">
+                <AlertTriangle size={24} className="mr-3" />
+                <h3 className="text-lg font-bold text-gray-900">Menu tidak tersedia!</h3>
+              </div>
+              <p className="text-gray-600 text-sm mb-3">
+                Menu berikut tidak dapat ditemukan di inventori saat ini:
+              </p>
+              <ul className="list-disc pl-5 mb-5 text-red-600 font-semibold text-sm">
+                {aiParsedResult.notFound.map((item, i) => <li key={i}>{item}</li>)}
+              </ul>
+              
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 max-h-48 overflow-y-auto mb-6">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Daftar Menu Tersedia</p>
+                <div className="space-y-2">
+                  {products.filter(p => p.stock > 0).map(p => (
+                    <div key={p._id} className="flex justify-between items-center text-sm border-b border-gray-200 pb-1 last:border-0">
+                      <span className="font-medium text-gray-800">{p.name}</span>
+                      <span className="text-gray-500 text-xs">Rp {p.sellPrice?.toLocaleString('id-ID')} ({p.stock} {p.unit})</span>
+                    </div>
+                  ))}
+                  {products.filter(p => p.stock > 0).length === 0 && (
+                    <p className="text-sm text-gray-400">Tidak ada produk tersedia (stok habis).</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <button 
+                  onClick={() => setAiParsedResult(null)} 
+                  className="px-6 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors w-full"
+                >
+                  Tutup & Edit Pesanan
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Done Modal */}
+      {confirmDoneModal.isOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-scale-in">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Check size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Selesaikan Pesanan?</h3>
+              <p className="text-gray-500 mb-6">
+                Apakah Anda yakin pesanan ini sudah selesai? Pesanan yang sudah berstatus Selesai <span className="font-bold text-red-500">tidak dapat dikembalikan</span> ke status sebelumnya.
+              </p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setConfirmDoneModal({ isOpen: false, orderId: null })}
+                  className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors"
+                >
+                  Batal
+                </button>
+                <button 
+                  onClick={executeConfirmDone}
+                  className="flex-1 py-2.5 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition-colors shadow-lg shadow-green-500/30"
+                >
+                  Ya, Selesaikan
                 </button>
               </div>
             </div>

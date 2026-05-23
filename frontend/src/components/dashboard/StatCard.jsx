@@ -40,7 +40,7 @@ const StatCard = ({ label, value, icon: Icon, trend, trendValue, iconColorClass,
 
       <div className="p-5 flex-1">
         <div className="flex justify-between items-start mb-4">
-          <p className={`text-xs font-bold uppercase tracking-wider ${alert ? 'text-red-600' : 'text-gray-500'}`}>
+          <p className={`text-xs font-bold uppercase tracking-wider text-gray-500`}>
             {label}
           </p>
           <div className={`p-2 rounded-xl ${iconBgClass}`}>
@@ -49,7 +49,7 @@ const StatCard = ({ label, value, icon: Icon, trend, trendValue, iconColorClass,
         </div>
 
         <div className="flex items-baseline space-x-2">
-          <h3 className={`text-3xl font-extrabold tracking-tight ${alert ? 'text-red-600' : 'text-gray-900'}`}>
+          <h3 className={`text-3xl font-extrabold tracking-tight text-gray-900`}>
             {isNumericOnly ? (
               new Intl.NumberFormat('id-ID').format(animatedValue)
             ) : (

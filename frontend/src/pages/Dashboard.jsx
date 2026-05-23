@@ -95,8 +95,8 @@ const Dashboard = () => {
             label="Total Pesanan"
             value={stats.totalOrders}
             icon={ShoppingBag}
-            trend="up"
-            trendValue="+12% vs kemarin"
+            trend={stats.trends?.orders?.startsWith('-') ? "down" : "up"}
+            trendValue={stats.trends?.orders || "-"}
             iconColorClass="text-primary"
             iconBgClass="bg-orange-100"
             borderClass="border-t-4 border-t-orange-600"
@@ -105,8 +105,8 @@ const Dashboard = () => {
             label="Pendapatan Hari Ini"
             value={`Rp ${stats.revenueToday > 1000000 ? (stats.revenueToday / 1000000).toFixed(1) + 'M' : stats.revenueToday.toLocaleString('id-ID')}`}
             icon={Banknote}
-            trend="up"
-            trendValue="+8.5% vs kemarin"
+            trend={stats.trends?.revenue?.startsWith('-') ? "down" : "up"}
+            trendValue={stats.trends?.revenue || "-"}
             iconColorClass="text-secondary"
             iconBgClass="bg-blue-100"
             borderClass="border-t-4 border-t-indigo-500"
@@ -115,11 +115,11 @@ const Dashboard = () => {
             label="Stok Menipis"
             value={stats.lowStockCount}
             icon={AlertTriangle}
-            trend="down"
-            trendValue="Butuh perhatian segera"
-            iconColorClass="text-red-600"
-            iconBgClass="bg-red-100"
-            borderClass="border-t-4 border-t-red-500"
+            trend={stats.lowStockCount > 0 ? "down" : "up"}
+            trendValue={stats.lowStockCount > 0 ? "Butuh perhatian segera" : "Stok aman"}
+            iconColorClass={stats.lowStockCount > 0 ? "text-red-600" : "text-green-600"}
+            iconBgClass={stats.lowStockCount > 0 ? "bg-red-100" : "bg-green-100"}
+            borderClass={stats.lowStockCount > 0 ? "border-t-4 border-t-red-500" : "border-t-4 border-t-green-500"}
             alert={true}
           />
           <StatCard 

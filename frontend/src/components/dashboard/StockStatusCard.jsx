@@ -63,7 +63,7 @@ const StockStatusCard = ({ stockData }) => {
       </div>
 
       <button className="mt-6 w-full bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-700 font-semibold py-3 rounded-xl transition-all">
-        Kelola Inventaris
+        <a href="/dashboard/inventory">Kelola Inventaris</a>
       </button>
     </div>
   );

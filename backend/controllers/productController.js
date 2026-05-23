@@ -3,6 +3,7 @@ const StockMovement = require('../models/StockMovement');
 const Business = require('../models/Business');
 const Groq = require('groq-sdk');
 
+
 // @desc    Get all products for a business
 // @route   GET /api/products
 // @access  Private
@@ -236,107 +237,11 @@ const getStockMovements = async (req, res) => {
   }
 };
 
-// @desc    Get AI Restock Advice
-// @route   GET /api/products/restock-advice
-// @access  Private
-const getRestockAdvice = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    
-    // Get low stock active products
-    const lowStockProducts = await Product.find({
-      userId,
-      isActive: true,
-      $expr: { $lte: ['$stock', '$minStock'] }
-    });
-
-    if (lowStockProducts.length === 0) {
-      return res.json([]);
-    }
-
-    // Get recent OUT movements to calculate velocity
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 7);
-    
-    const productIds = lowStockProducts.map(p => p._id);
-    const recentMovements = await StockMovement.find({
-      productId: { $in: productIds },
-      type: 'out',
-      createdAt: { $gte: startDate }
-    });
-
-    const contextData = lowStockProducts.map(p => {
-      const outs = recentMovements.filter(m => m.productId.toString() === p._id.toString());
-      const totalOut = outs.reduce((sum, m) => sum + m.quantity, 0);
-      const velocityPerDay = totalOut / 7;
-      
-      return {
-        name: p.name,
-        currentStock: p.stock,
-        minStock: p.minStock,
-        salesPerDay: velocityPerDay.toFixed(1)
-      };
-    });
-
-    if (!process.env.GROQ_API_KEY) {
-      return res.status(500).json({ message: 'Groq API Key belum dikonfigurasi' });
-    }
-
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-    
-    const prompt = `
-      Anda adalah asisten AI spesialis manajemen inventori.
-      Berikut adalah data produk yang stoknya sudah kritis atau habis:
-      ${JSON.stringify(contextData)}
-      
-      Tugas Anda: Berikan saran restock untuk setiap produk berdasarkan sisa stok dan rata-rata penjualan harian.
-      Jika currentStock 0, predictedDaysLeft adalah 0.
-      Jika salesPerDay 0, predictedDaysLeft anggap saja 99.
-      recommendedRestock adalah jumlah yang disarankan untuk dibeli agar aman untuk 14 hari ke depan (salesPerDay * 14).
-      
-      Output HANYA berupa JSON Object dengan struktur:
-      {
-        "advice": [
-          {
-            "product": "Nama Produk",
-            "currentStock": number,
-            "predictedDaysLeft": number,
-            "recommendedRestock": number,
-            "reason": "Penjelasan singkat 1 kalimat"
-          }
-        ]
-      }
-    `;
-
-    const chatCompletion = await groq.chat.completions.create({
-      messages: [{ role: 'user', content: prompt }],
-      model: 'llama-3.1-8b-instant',
-      temperature: 0.1,
-      response_format: { type: 'json_object' } 
-    });
-
-    const responseContent = chatCompletion.choices[0]?.message?.content;
-    
-    try {
-      const parsed = JSON.parse(responseContent);
-      res.json(parsed.advice || []);
-    } catch (parseError) {
-      console.error("Failed to parse Groq response:", responseContent);
-      res.json([]);
-    }
-
-  } catch (error) {
-    console.error('Error getting restock advice:', error);
-    res.status(500).json({ message: 'Gagal mengambil saran restock' });
-  }
-};
-
 module.exports = {
   getProducts,
   createProduct,
   updateProduct,
   deleteProduct,
   restockProduct,
-  getStockMovements,
-  getRestockAdvice
+  getStockMovements
 };
