@@ -13,6 +13,8 @@ const productRoutes = require('./routes/productRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
+const financeRoutes = require('./routes/financeRoutes');
 const path = require('path');
 
 const app = express();
@@ -29,6 +31,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/finance', financeRoutes);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

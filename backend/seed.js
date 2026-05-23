@@ -12,6 +12,7 @@ const Product = require('./models/Product');
 const Order = require('./models/Order');
 const Review = require('./models/Review');
 const StockMovement = require('./models/StockMovement');
+const Expense = require('./models/Expense');
 
 mongoose.set('strictQuery', false);
 
@@ -27,6 +28,7 @@ const seedDatabase = async () => {
     await Order.deleteMany();
     await Review.deleteMany();
     await StockMovement.deleteMany();
+    await Expense.deleteMany();
     console.log('Cleared existing data.');
 
     // 1. Create Demo User
@@ -73,7 +75,7 @@ const seedDatabase = async () => {
     }
     console.log('Created 5 Products.');
 
-    // 4. Create Recent Orders (Today)
+    // 4. Create 30 Days History (Orders, Stock Movements, Expenses)
     const today = new Date();
     const pNasi = await Product.findOne({ name: 'Nasi Goreng Spesial' });
     const pAyam = await Product.findOne({ name: 'Ayam Penyet' });
@@ -81,81 +83,72 @@ const seedDatabase = async () => {
     const pMie = await Product.findOne({ name: 'Mie Tek-Tek' });
     const pSate = await Product.findOne({ name: 'Sate Ayam (10 tusuk)' });
     const pKopi = await Product.findOne({ name: 'Kopi Susu Aren' });
-
-    const ordersData = [
-      { 
-        orderNumber: '#ORD-0921', 
-        customerName: 'Siti Aminah', 
-        orderType: 'meja',
-        tableNumber: '4',
-        items: [{ productId: pNasi._id, productName: pNasi.name, qty: 2, price: 25000, subtotal: 50000 }], 
-        totalAmount: 50000, 
-        status: 'pending', 
-        createdAt: new Date(today.getTime() - 1000 * 60 * 10) 
-      },
-      { 
-        orderNumber: '#ORD-0920', 
-        customerName: 'Andi Supriadi', 
-        orderType: 'bungkus',
-        items: [
-          { productId: pMie._id, productName: pMie.name, qty: 1, price: 15000, subtotal: 15000 },
-          { productId: pTeh._id, productName: pTeh.name, qty: 1, price: 5000, subtotal: 5000 }
-        ], 
-        totalAmount: 20000, 
-        status: 'processing', 
-        createdAt: new Date(today.getTime() - 1000 * 60 * 30) 
-      },
-      { 
-        orderNumber: '#ORD-0919', 
-        customerName: 'Rina Herawati', 
-        orderType: 'delivery',
-        address: 'Jl. Melati No 10',
-        items: [{ productId: pAyam._id, productName: pAyam.name, qty: 1, price: 25000, subtotal: 25000 }], 
-        totalAmount: 25000, 
-        status: 'done', 
-        createdAt: new Date(today.getTime() - 1000 * 60 * 60) 
-      },
-      { 
-        orderNumber: '#ORD-0918', 
-        customerName: 'Ahmad Fauzi', 
-        orderType: 'meja',
-        tableNumber: '1',
-        items: [{ productId: pSate._id, productName: pSate.name, qty: 2, price: 30000, subtotal: 60000 }], 
-        totalAmount: 60000, 
-        status: 'done', 
-        createdAt: new Date(today.getTime() - 1000 * 60 * 120) 
-      },
-      { 
-        orderNumber: '#ORD-0917', 
-        customerName: 'Dewi Lestari', 
-        orderType: 'bungkus',
-        items: [{ productId: pNasi._id, productName: pNasi.name, qty: 1, price: 25000, subtotal: 25000 }], 
-        totalAmount: 25000, 
-        status: 'done', 
-        createdAt: new Date(today.getTime() - 1000 * 60 * 180) 
-      },
-    ];
-
-    for (const o of ordersData) {
-      await Order.create({
-        userId: demoUser._id,
-        businessId: business._id,
-        ...o
-      });
-    }
-    console.log('Created 5 Recent Orders.');
-
-    // 4.5. Create Stock Movement (7 Days History)
-    const stockMovements = [];
     const productsList = [pNasi, pAyam, pTeh, pMie, pSate, pKopi];
     
-    for (let i = 6; i >= 0; i--) {
+    const customers = ['Siti Aminah', 'Andi Supriadi', 'Rina Herawati', 'Ahmad Fauzi', 'Dewi Lestari', 'Budi Hartono', 'Citra Kirana'];
+    
+    const stockMovements = [];
+    const expenses = [];
+    let orderCount = 1000;
+
+    for (let i = 30; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       
-      // Random OUT movements for all products
+      // Randomly generate 3 to 10 orders per day
+      const dailyOrdersCount = Math.floor(Math.random() * 8) + 3;
+      
+      for (let j = 0; j < dailyOrdersCount; j++) {
+        // Peak hours preference: 11-13 and 17-20
+        const isPeak = Math.random() > 0.5;
+        let hour;
+        if (isPeak) {
+          hour = Math.random() > 0.5 ? Math.floor(Math.random() * 3) + 11 : Math.floor(Math.random() * 4) + 17;
+        } else {
+          hour = Math.floor(Math.random() * 10) + 8; // 8-17
+        }
+        
+        const orderDate = new Date(date);
+        orderDate.setHours(hour, Math.floor(Math.random() * 60));
+
+        // 1 to 3 items per order
+        const numItems = Math.floor(Math.random() * 3) + 1;
+        const items = [];
+        let totalAmount = 0;
+        
+        for (let k = 0; k < numItems; k++) {
+          const p = productsList[Math.floor(Math.random() * productsList.length)];
+          const qty = Math.floor(Math.random() * 2) + 1;
+          const subtotal = p.sellPrice * qty;
+          totalAmount += subtotal;
+          
+          if (!items.find(item => item.productId === p._id)) {
+            items.push({ productId: p._id, productName: p.name, qty, price: p.sellPrice, subtotal });
+          }
+        }
+        
+        // Status: Mostly 'done', but if today, maybe pending/processing
+        let status = 'done';
+        if (i === 0 && Math.random() > 0.7) {
+          status = Math.random() > 0.5 ? 'pending' : 'processing';
+        }
+
+        await Order.create({
+          userId: demoUser._id,
+          businessId: business._id,
+          orderNumber: `#ORD-${orderCount++}`,
+          customerName: customers[Math.floor(Math.random() * customers.length)],
+          orderType: ['meja', 'bungkus', 'delivery'][Math.floor(Math.random() * 3)],
+          items,
+          totalAmount,
+          status,
+          createdAt: orderDate
+        });
+      }
+
+      // Generate Stock Movements (Out) based on daily sales roughly
       productsList.forEach(p => {
-        const outQty = Math.floor(Math.random() * 20) + 1; // 1 to 20
+        const outQty = Math.floor(Math.random() * 10) + 1;
         stockMovements.push({
           businessId: business._id,
           productId: p._id,
@@ -166,24 +159,43 @@ const seedDatabase = async () => {
           createdAt: date
         });
         
-        // Random IN movements (less frequent)
-        if (Math.random() > 0.7) {
-          const inQty = Math.floor(Math.random() * 50) + 20;
+        // Occasional Restock
+        if (Math.random() > 0.8) {
           stockMovements.push({
             businessId: business._id,
             productId: p._id,
             productName: p.name,
             type: 'in',
-            quantity: inQty,
-            notes: 'Restock Mingguan',
+            quantity: Math.floor(Math.random() * 50) + 20,
+            notes: 'Restock Berkala',
             createdAt: date
           });
         }
       });
+
+      // Generate Expenses (every few days)
+      if (Math.random() > 0.8) {
+        const categories = ['operasional', 'peralatan', 'marketing', 'lainnya'];
+        expenses.push({
+          userId: demoUser._id,
+          businessId: business._id,
+          description: `Pengeluaran ${categories[Math.floor(Math.random() * categories.length)]} rutin`,
+          category: categories[Math.floor(Math.random() * categories.length)],
+          amount: Math.floor(Math.random() * 200000) + 50000,
+          date: date
+        });
+      }
     }
+    
+    // Add fixed big expenses
+    const lastWeek = new Date();
+    lastWeek.setDate(lastWeek.getDate() - 7);
+    expenses.push({ userId: demoUser._id, businessId: business._id, description: 'Pembayaran Listrik Bulanan', category: 'operasional', amount: 500000, date: lastWeek });
+    expenses.push({ userId: demoUser._id, businessId: business._id, description: 'Gaji Karyawan', category: 'gaji', amount: 2000000, date: lastWeek });
 
     await StockMovement.insertMany(stockMovements);
-    console.log('Created Stock Movements for 7 days.');
+    await Expense.insertMany(expenses);
+    console.log('Created 30 days of Orders, Stock Movements, and Expenses.');
 
     // 5. Create Sample Reviews
     const reviewsData = [

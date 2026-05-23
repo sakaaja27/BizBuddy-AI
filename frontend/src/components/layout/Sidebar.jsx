@@ -10,9 +10,9 @@ const Sidebar = () => {
   const menuItems = [
     { name: 'Beranda', icon: LayoutDashboard, path: '/dashboard' },
     { name: 'Pesanan', icon: ShoppingBag, path: '/dashboard/orders' },
-    { name: 'Analitik', icon: BarChart2, path: '/analytics' },
+    { name: 'Analitik', icon: BarChart2, path: '/dashboard/analytics' },
     { name: 'Stok', icon: Package, path: '/dashboard/inventory' },
-    { name: 'Keuangan', icon: Wallet, path: '/finance' },
+    { name: 'Keuangan', icon: Wallet, path: '/dashboard/finance' },
     { name: 'Review Intelligence', icon: Sparkles, path: '/dashboard/reviews' },
     { name: 'AI Assistant', icon: Bot, path: '/dashboard/ai-assistant', isAi: true },
     { name: 'Bantuan', icon: HelpCircle, path: '/help' },

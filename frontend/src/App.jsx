@@ -8,6 +8,8 @@ import Orders from './pages/Orders';
 import Reviews from './pages/Reviews';
 import AiAssistant from './pages/AiAssistant';
 import Inventory from './pages/Inventory';
+import Analytics from './pages/Analytics';
+import Finance from './pages/Finance';
 import ProtectedRoute from './components/ProtectedRoute';
 import useAuthStore from './store/useAuthStore';
 import axios from 'axios';
@@ -87,6 +89,22 @@ const App = () => {
           element={
             <ProtectedRoute>
               <AiAssistant />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/analytics" 
+          element={
+            <ProtectedRoute>
+              <Analytics />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/finance" 
+          element={
+            <ProtectedRoute>
+              <Finance />
             </ProtectedRoute>
           } 
         />
