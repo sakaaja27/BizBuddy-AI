@@ -1,13 +1,14 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, BarChart2, Package, Sparkles, ShoppingBag } from 'lucide-react';
+import { LayoutDashboard, Package, Sparkles, ShoppingBag, Wallet } from 'lucide-react';
 
 const BottomNav = () => {
   const menuItems = [
     { name: 'Beranda', icon: LayoutDashboard, path: '/dashboard' },
     { name: 'Pesanan', icon: ShoppingBag, path: '/dashboard/orders' },
-    { name: 'Stok', icon: Package, path: '/stock' },
-    { name: 'Insights', icon: Sparkles, path: '/insights', isAi: true },
+    { name: 'Stok', icon: Package, path: '/dashboard/inventory' },
+    { name: 'Keuangan', icon: Wallet, path: '/dashboard/finance' },
+    { name: 'AI Assistant', icon: Sparkles, path: '/dashboard/ai-assistant', isAi: true },
   ];
 
   return (
@@ -17,7 +18,7 @@ const BottomNav = () => {
           key={item.name}
           to={item.path}
           className={({ isActive }) => `
-            flex flex-col items-center p-2 rounded-xl transition-all duration-200 min-w-[64px]
+            flex flex-col items-center p-2 rounded-xl transition-all duration-200 flex-1
             ${isActive ? 'text-primary' : 'text-gray-400 hover:text-gray-600'}
           `}
         >

@@ -79,9 +79,7 @@ const Analytics = () => {
     }
   };
 
-  const handleExport = () => {
-    alert("Export Laporan (Fitur PDF akan ditambahkan jika diperlukan)");
-  };
+ 
 
   return (
     <DashboardLayout>
@@ -97,13 +95,7 @@ const Analytics = () => {
             onPeriodChange={setPeriodConfig}
             disabled={loading}
           />
-          <button 
-            onClick={handleExport}
-            className="flex items-center px-4 py-2 bg-white border-2 border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors whitespace-nowrap"
-          >
-            <Download size={18} className="mr-2" />
-            Export Laporan
-          </button>
+          
         </div>
       </div>
 
@@ -224,7 +216,7 @@ const Analytics = () => {
                 </ResponsiveContainer>
               </div>
               <div className="flex gap-2 justify-center flex-wrap">
-                {peakHours.sort((a,b)=>b.orderCount - a.orderCount).slice(0,3).map((h, i) => (
+                {[...peakHours].sort((a,b)=>b.orderCount - a.orderCount).slice(0,3).map((h, i) => (
                   <span key={i} className="px-3 py-1 bg-orange-100 text-orange-700 font-bold rounded-full text-sm">
                     🔥 {h.hour}:00
                   </span>

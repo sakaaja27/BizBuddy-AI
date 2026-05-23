@@ -93,35 +93,32 @@ const Finance = () => {
     }
   };
 
-  const handleExportExcel = () => {
-    const params = new URLSearchParams({
-      period: periodConfig.period,
-      ...(periodConfig.from && { from: periodConfig.from }),
-      ...(periodConfig.to && { to: periodConfig.to }),
-    }).toString();
-    window.location.href = `http://localhost:5000/api/finance/export/excel?${params}`;
+  const handleExportExcel = async () => {
     setIsExportMenuOpen(false);
-  };
-
-  const handleExportPDF = () => {
-    setIsExportMenuOpen(false);
-    const element = pdfRef.current;
-    if (!element) return;
-    
-    const opt = {
-      margin:       10,
-      filename:     `Laporan-Keuangan-${periodConfig.period.replace(/\s+/g, '-')}.pdf`,
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true },
-      jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
-    };
-
-    html2pdf().set(opt).from(element).save();
+    try {
+      const params = new URLSearchParams({
+        period: periodConfig.period,
+        ...(periodConfig.from && { from: periodConfig.from }),
+        ...(periodConfig.to && { to: periodConfig.to }),
+      }).toString();
+      
+      const response = await axios.get(`/finance/export/excel?${params}`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Laporan-Keuangan-${periodConfig.period.replace(/\s+/g, '-')}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Export Excel failed:', error);
+      alert('Gagal mengunduh Excel');
+    }
   };
 
   return (
     <DashboardLayout>
-      <div ref={pdfRef} className="bg-[#FAFAFA] min-h-screen">
+      <div className="bg-[#FAFAFA] min-h-screen">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-8 gap-4 px-1 py-1">
           <div>
@@ -134,28 +131,13 @@ const Finance = () => {
               onPeriodChange={(config) => { setPeriodConfig(config); setTransactions({ ...transactions, currentPage: 1 }); }}
               disabled={loading}
             />
-            
-            <div className="relative" ref={exportMenuRef}>
-              <button 
-                onClick={() => setIsExportMenuOpen(!isExportMenuOpen)}
-                className="flex items-center px-4 py-2 bg-primary text-white font-bold rounded-xl hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/20"
-              >
-                <Download size={18} className="mr-2" />
-                <span className="hidden sm:inline">Export</span>
-                <ChevronDown size={16} className="ml-1" />
-              </button>
-              
-              {isExportMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-xl shadow-xl z-50 overflow-hidden">
-                  <button onClick={handleExportPDF} className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm font-semibold flex items-center border-b border-gray-50 text-gray-700">
-                    📄 Export PDF
-                  </button>
-                  <button onClick={handleExportExcel} className="w-full text-left px-4 py-3 hover:bg-gray-50 text-sm font-semibold flex items-center text-gray-700">
-                    📊 Export Excel
-                  </button>
-                </div>
-              )}
-            </div>
+            <button 
+              onClick={handleExportExcel}
+              className="flex items-center px-4 py-2 bg-primary text-white font-bold rounded-xl hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/20"
+            >
+              <Download size={18} className="mr-2" />
+              <span className="hidden sm:inline">Excel</span>
+            </button>
           </div>
         </div>
 
@@ -295,44 +277,8 @@ const Finance = () => {
                 )}
               </div>
 
-              {/* Product Contribution */}
+              {/* Tax Estimation */}
               <div className="lg:col-span-5 flex flex-col gap-8">
-                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex-1">
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-bold text-gray-900 text-lg">Kontribusi Produk</h3>
-                    <div className="flex bg-gray-100 p-1 rounded-lg">
-                      <button onClick={() => setBreakdownType('revenue')} className={`px-2 py-1 text-xs font-bold rounded-md ${breakdownType === 'revenue' ? 'bg-white text-primary shadow-sm' : 'text-gray-500'}`}>Revenue</button>
-                      <button onClick={() => setBreakdownType('profit')} className={`px-2 py-1 text-xs font-bold rounded-md ${breakdownType === 'profit' ? 'bg-white text-primary shadow-sm' : 'text-gray-500'}`}>Profit</button>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4 max-h-[300px] overflow-y-auto pr-2">
-                    {productBreakdown.length === 0 ? <p className="text-center text-gray-500 py-4">Tidak ada data penjualan</p> : (
-                      productBreakdown.sort((a,b) => b[breakdownType] - a[breakdownType]).map((p) => (
-                        <div key={p.productName}>
-                          <div className="flex justify-between text-sm font-semibold mb-1">
-                            <span className="text-gray-800">{p.productName}</span>
-                            <span className={breakdownType === 'revenue' ? 'text-orange-600' : 'text-green-600'}>
-                              Rp {p[breakdownType].toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-100 rounded-full h-2">
-                            <div 
-                              className={`h-2 rounded-full ${breakdownType === 'revenue' ? 'bg-orange-500' : 'bg-green-500'}`}
-                              style={{ width: `${Math.max(5, (p[breakdownType] / productBreakdown[0][breakdownType]) * 100)}%` }}
-                            ></div>
-                          </div>
-                          <div className="text-xs text-gray-400 mt-1 flex justify-between">
-                            <span>{p.terjual} terjual</span>
-                            <span>Margin {p.margin.toFixed(0)}%</span>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                {/* Tax Estimation */}
                 <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6">
                   <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wider mb-4">Estimasi Pajak (PPh Final UMKM 0.5%)</h3>
                   <div className="flex justify-between items-end mb-2">
@@ -347,39 +293,40 @@ const Finance = () => {
                     *Hanya estimasi berdasarkan PP No 23 Tahun 2018 (0.5% dari peredaran bruto). Konsultasikan dengan konsultan pajak Anda untuk angka pasti.
                   </p>
                 </div>
+                {/* Manual Expense Form */}
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 border-t-4 border-t-primary">
+                  <h3 className="font-bold text-gray-900 mb-4 text-lg">Catat Pengeluaran</h3>
+                  <form onSubmit={handleAddExpense} className="flex flex-col gap-4">
+                    <div className="w-full">
+                      <label className="block text-xs font-bold text-gray-500 mb-1">Keterangan</label>
+                      <input type="text" value={expenseForm.description} onChange={e => setExpenseForm({...expenseForm, description: e.target.value})} placeholder="Cth: Bayar Listrik" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-primary text-sm" required />
+                    </div>
+                    <div className="w-full">
+                      <label className="block text-xs font-bold text-gray-500 mb-1">Kategori</label>
+                      <select value={expenseForm.category} onChange={e => setExpenseForm({...expenseForm, category: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-primary text-sm">
+                        <option value="operasional">Operasional</option>
+                        <option value="gaji">Gaji</option>
+                        <option value="marketing">Marketing</option>
+                        <option value="peralatan">Peralatan</option>
+                        <option value="lainnya">Lainnya</option>
+                      </select>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="w-full sm:w-1/2">
+                        <label className="block text-xs font-bold text-gray-500 mb-1">Jumlah (Rp)</label>
+                        <input type="number" value={expenseForm.amount} onChange={e => setExpenseForm({...expenseForm, amount: e.target.value})} placeholder="500000" min="0" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-primary text-sm" required />
+                      </div>
+                      <div className="w-full sm:w-1/2">
+                        <label className="block text-xs font-bold text-gray-500 mb-1">Tanggal</label>
+                        <input type="date" value={expenseForm.date} onChange={e => setExpenseForm({...expenseForm, date: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 outline-none focus:border-primary text-sm" required />
+                      </div>
+                    </div>
+                    <button type="submit" className="w-full bg-primary text-white font-bold py-2.5 rounded-xl hover:bg-orange-600 transition-colors flex items-center justify-center mt-2 shadow-md shadow-primary/20">
+                      <Plus size={18} className="mr-2" /> Tambah Pengeluaran
+                    </button>
+                  </form>
+                </div>
               </div>
-            </div>
-
-            {/* Manual Expense Form */}
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 border-l-4 border-l-primary">
-              <h3 className="font-bold text-gray-900 mb-4 text-lg">Catat Pengeluaran Lain</h3>
-              <form onSubmit={handleAddExpense} className="flex flex-wrap items-end gap-4">
-                <div className="flex-1 min-w-[200px]">
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Keterangan</label>
-                  <input type="text" value={expenseForm.description} onChange={e => setExpenseForm({...expenseForm, description: e.target.value})} placeholder="Cth: Bayar Listrik Bulan Ini" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-primary text-sm" required />
-                </div>
-                <div className="w-40">
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Kategori</label>
-                  <select value={expenseForm.category} onChange={e => setExpenseForm({...expenseForm, category: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-primary text-sm">
-                    <option value="operasional">Operasional</option>
-                    <option value="gaji">Gaji</option>
-                    <option value="marketing">Marketing</option>
-                    <option value="peralatan">Peralatan</option>
-                    <option value="lainnya">Lainnya</option>
-                  </select>
-                </div>
-                <div className="w-48">
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Jumlah (Rp)</label>
-                  <input type="number" value={expenseForm.amount} onChange={e => setExpenseForm({...expenseForm, amount: e.target.value})} placeholder="500000" min="0" className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-primary text-sm" required />
-                </div>
-                <div className="w-40">
-                  <label className="block text-xs font-bold text-gray-500 mb-1">Tanggal</label>
-                  <input type="date" value={expenseForm.date} onChange={e => setExpenseForm({...expenseForm, date: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 outline-none focus:border-primary text-sm" required />
-                </div>
-                <button type="submit" className="bg-primary text-white font-bold py-2 px-6 rounded-xl hover:bg-orange-600 transition-colors flex items-center h-10 shadow-md shadow-primary/20">
-                  <Plus size={18} className="mr-2" /> Tambah
-                </button>
-              </form>
             </div>
           </>
         )}

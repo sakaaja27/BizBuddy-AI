@@ -92,7 +92,7 @@ const TopNavbar = ({ toggleMobileMenu }) => {
           </button>
 
           {isNotifOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 py-3 z-50 animate-fade-in">
+            <div className="absolute right-0 mt-2 w-[90vw] sm:w-80 bg-white rounded-2xl shadow-xl border border-gray-100 py-3 z-50 animate-fade-in">
               <div className="px-4 pb-2 border-b border-gray-50 flex justify-between items-center mb-2">
                 <h3 className="font-bold text-gray-900">Notifikasi</h3>
                 {notifications.length > 0 && (
@@ -134,7 +134,7 @@ const TopNavbar = ({ toggleMobileMenu }) => {
           </div>
 
           {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-fade-in">
+            <div className="absolute right-0 mt-2 w-[90vw] sm:w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50 animate-fade-in">
               <div className="px-4 py-3 border-b border-gray-50 mb-1">
                 <p className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Login Sebagai</p>
                 <p className="text-sm font-bold text-gray-900 truncate">{user?.name || 'Administrator'}</p>

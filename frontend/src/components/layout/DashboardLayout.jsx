@@ -12,7 +12,7 @@ const DashboardLayout = ({ children }) => {
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex">
-      <Sidebar />
+      <Sidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       
       {/* Main Content Wrapper - with margin left to account for fixed sidebar on desktop */}
       <div className="flex-1 md:ml-64 flex flex-col min-h-screen transition-all duration-300 w-full">
@@ -24,7 +24,6 @@ const DashboardLayout = ({ children }) => {
         </main>
       </div>
 
-      <BottomNav />
     </div>
   );
 };

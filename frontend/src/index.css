@@ -41,3 +41,25 @@ body {
     scrollbar-width: none;
   }
 }
+
+/* Print styles for PDF Export */
+@media print {
+  body.print-mode aside, 
+  body.print-mode header,
+  body.print-mode .export-btn-container {
+    display: none !important;
+  }
+  body.print-mode main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  body.print-mode {
+    background-color: white !important;
+  }
+  @page {
+    size: A4 landscape;
+    margin: 1cm;
+  }
+}

@@ -313,7 +313,7 @@ const Orders = () => {
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={`flex-1 p-3 rounded-b-xl border border-t-0 border-gray-100 min-h-[500px] transition-colors
-              ${snapshot.isDraggingOver ? 'bg-orange-50/50 border-orange-200 border-dashed' : id === 'pending' ? 'bg-gray-50/50' : id === 'processing' ? 'bg-yellow-50/30' : 'bg-green-50/30'}`}
+              ${snapshot.isDraggingOver ? 'bg-orange-50/50 border-orange-200 border-dashed' : id === 'pending' ? 'bg-orange-50' : id === 'processing' ? 'bg-yellow-50' : 'bg-green-50'}`}
           >
             {items.map((order, index) => (
               <Draggable key={order._id} draggableId={order._id} index={index}>
@@ -411,34 +411,37 @@ const Orders = () => {
         </div>
 
         {/* AI Input Bar (Hero) */}
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 md:p-3 mb-8 relative group">
-          <form onSubmit={handleAiSubmit} className="flex items-center gap-3">
-            <div className="flex-shrink-0 pl-2">
-              <Sparkles size={24} className="text-primary animate-pulse" />
-            </div>
-            <input
-              type="text"
-              value={aiInput}
-              onChange={(e) => setAiInput(e.target.value)}
-              placeholder="Ketik pesanan dengan bebas... contoh: '2 nasi goreng untuk Budi meja 3'"
-              className="flex-1 bg-transparent border-none focus:ring-0 text-gray-900 text-sm md:text-base placeholder-gray-400 py-2"
-              disabled={isAiProcessing || aiParsedResult}
-            />
-            <button
-              type="submit"
-              disabled={!aiInput || isAiProcessing || aiParsedResult}
-              className={`w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl transition-all
-                ${aiInput && !isAiProcessing && !aiParsedResult ? 'bg-primary hover:bg-orange-600 text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}
-            >
-              {isAiProcessing ? <Loader2 size={20} className="animate-spin" /> : <ArrowRight size={20} />}
-            </button>
-          </form>
-          
-          <div className="absolute -bottom-6 left-4 text-xs text-gray-400 font-medium flex items-center">
-            <Sparkles size={12} className="mr-1 opacity-70" /> AI akan otomatis memproses dan menambahkan pesanan kamu
-          </div>
+        <div className="mb-8">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 md:p-3 relative group">
+            <form onSubmit={handleAiSubmit} className="flex items-center gap-2 md:gap-3">
+              <div className="flex-shrink-0 pl-1 md:pl-2">
+                <Sparkles size={20} className="text-primary animate-pulse md:w-6 md:h-6" />
+              </div>
+              <input
+                type="text"
+                value={aiInput}
+                onChange={(e) => setAiInput(e.target.value)}
+                placeholder="Ketik pesanan... cth: '2 nasi goreng meja 3'"
+                className="flex-1 bg-transparent border-none focus:ring-0 text-gray-900 text-sm md:text-base placeholder-gray-400 py-2 w-full min-w-0"
+                disabled={isAiProcessing || aiParsedResult}
+              />
+              <button
+                type="submit"
+                disabled={!aiInput || isAiProcessing || aiParsedResult}
+                className={`w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl transition-all shrink-0
+                  ${aiInput && !isAiProcessing && !aiParsedResult ? 'bg-primary hover:bg-orange-600 text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}
+              >
+                {isAiProcessing ? <Loader2 size={18} className="animate-spin md:w-5 md:h-5" /> : <ArrowRight size={18} className="md:w-5 md:h-5" />}
+              </button>
+            </form>
 
-          <div className="absolute inset-0 rounded-2xl border-1.5 border-transparent pointer-events-none transition-colors group-focus-within:border-primary group-focus-within:shadow-[0_0_15px_rgba(249,115,22,0.15)]"></div>
+            <div className="absolute inset-0 rounded-2xl border-1.5 border-transparent pointer-events-none transition-colors group-focus-within:border-primary group-focus-within:shadow-[0_0_15px_rgba(249,115,22,0.15)]"></div>
+          </div>
+          
+          <div className="mt-2 ml-2 md:ml-4 text-[10px] md:text-xs text-gray-400 font-medium flex items-center">
+            <Sparkles size={12} className="mr-1 opacity-70 shrink-0" /> 
+            <span>AI otomatis mencatat pesanan dari teks Anda</span>
+          </div>
         </div>
 
         {/* AI Parse Result Preview */}
@@ -566,9 +569,9 @@ const Orders = () => {
         {orders.length > 0 && viewMode === 'kanban' && (
           <DragDropContext onDragEnd={onDragEnd}>
             <div className="flex flex-col md:flex-row gap-6 overflow-x-auto pb-4 hide-scrollbar">
-              {renderKanbanColumn('Pending', 'pending', pendingOrders, 'bg-gray-50', 'bg-orange-500')}
-              {renderKanbanColumn('Diproses', 'processing', processingOrders, 'bg-yellow-50/50', 'bg-yellow-500')}
-              {renderKanbanColumn('Selesai', 'done', doneOrders, 'bg-green-50/50', 'bg-green-500')}
+              {renderKanbanColumn('Pending', 'pending', pendingOrders, 'bg-orange-100', 'bg-orange-500')}
+              {renderKanbanColumn('Diproses', 'processing', processingOrders, 'bg-yellow-100', 'bg-yellow-500')}
+              {renderKanbanColumn('Selesai', 'done', doneOrders, 'bg-green-100', 'bg-green-500')}
             </div>
           </DragDropContext>
         )}
@@ -581,7 +584,7 @@ const Orders = () => {
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden animate-slide-up flex flex-col max-h-[90vh]">
-              <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-gray-50/50">
+              <div className="flex justify-between items-center p-5 border-b border-gray-00 bg-gray-50/50">
                 <h3 className="font-bold text-gray-900 text-lg">
                   {editingOrderId ? 'Edit Pesanan' : 'Tambah Pesanan Manual'}
                 </h3>
@@ -653,7 +656,7 @@ const Orders = () => {
 
                 <div className="mb-4 pt-4 border-t border-gray-100">
                   <label className="block text-sm font-semibold text-gray-700 mb-2">Pilih Item</label>
-                  <div className="flex gap-2 mb-3">
+                  <div className="flex flex-col sm:flex-row gap-2 mb-3">
                     <select 
                       value={selectedProductId}
                       onChange={(e) => setSelectedProductId(e.target.value)}
@@ -664,20 +667,22 @@ const Orders = () => {
                         <option key={p._id} value={p._id}>{p.name} - Rp {p.sellPrice.toLocaleString('id-ID')}</option>
                       ))}
                     </select>
-                    <input 
-                      type="number" 
-                      min="1"
-                      value={selectedQty}
-                      onChange={(e) => setSelectedQty(e.target.value)}
-                      className="w-20 border border-gray-200 rounded-xl px-3 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm text-center" 
-                    />
-                    <button 
-                      onClick={handleAddItem}
-                      disabled={!selectedProductId}
-                      className="bg-orange-100 text-orange-600 hover:bg-orange-200 px-4 py-2.5 rounded-xl font-bold transition-colors disabled:opacity-50"
-                    >
-                      Tambah
-                    </button>
+                    <div className="flex gap-2">
+                      <input 
+                        type="number" 
+                        min="1"
+                        value={selectedQty}
+                        onChange={(e) => setSelectedQty(e.target.value)}
+                        className="w-20 border border-gray-200 rounded-xl px-3 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm text-center" 
+                      />
+                      <button 
+                        onClick={handleAddItem}
+                        disabled={!selectedProductId}
+                        className="flex-1 sm:flex-none bg-orange-100 text-orange-600 hover:bg-orange-200 px-4 py-2.5 rounded-xl font-bold transition-colors disabled:opacity-50"
+                      >
+                        Tambah
+                      </button>
+                    </div>
                   </div>
 
                   {/* Added Items List */}

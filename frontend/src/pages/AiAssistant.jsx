@@ -172,11 +172,11 @@ const AiAssistant = () => {
 
   return (
     <DashboardLayout>
-      {/* Hide default padding and full height the content area */}
-      <div className="flex flex-col h-[calc(100vh-4rem)] md:h-screen w-full relative">
+      {/* Absolute full-height container to bypass DashboardLayout padding */}
+      <div className="fixed top-16 right-0 bottom-[64px] md:bottom-0 left-0 md:left-64 flex flex-col bg-[#F8F9FA] z-10">
         
         {/* Chat Header */}
-        <div className="flex items-center justify-between px-6 py-4 bg-white border-b border-gray-100 shrink-0 sticky top-0 z-10 md:pt-6">
+        <div className="flex items-center justify-between px-6 py-3 bg-white border-b border-gray-100 shrink-0 shadow-sm z-20">
           <div className="flex items-center gap-3">
             <div className="relative">
               <div className="w-12 h-12 bg-gray-900 rounded-full flex items-center justify-center text-white shadow-sm">
@@ -189,14 +189,10 @@ const AiAssistant = () => {
               <p className="text-green-500 text-xs font-semibold">Siap membantu bisnis Anda hari ini</p>
             </div>
           </div>
-          <div className="flex gap-2 text-gray-400">
-            <button className="p-2 hover:bg-gray-50 rounded-full transition-colors"><Search size={20} /></button>
-            <button className="p-2 hover:bg-gray-50 rounded-full transition-colors"><MoreVertical size={20} /></button>
-          </div>
         </div>
 
         {/* Messages Area */}
-        <div className="flex-1 overflow-y-auto bg-[#F8F9FA] p-4 md:p-6 pb-32">
+        <div className="flex-1 overflow-y-auto bg-[#F8F9FA] p-4 md:p-6">
           <div className="max-w-4xl mx-auto space-y-6">
             
             {/* Date Pill */}
@@ -259,8 +255,8 @@ const AiAssistant = () => {
           </div>
         </div>
 
-        {/* Input Area (Fixed Bottom) */}
-        <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-4 md:px-8 z-10 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)]">
+        {/* Input Area (Natural Flex Bottom) */}
+        <div className="bg-white border-t border-gray-100 px-4 py-4 md:px-8 z-20 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.05)] shrink-0">
           <div className="max-w-4xl mx-auto">
             
             {/* Suggestion Chips */}
@@ -280,10 +276,6 @@ const AiAssistant = () => {
 
             {/* Input Bar */}
             <div className="flex items-end gap-3">
-              <button className="p-3 text-gray-400 hover:bg-gray-100 rounded-full transition-colors shrink-0 mb-1">
-                <Plus size={24} />
-              </button>
-              
               <div className="flex-1 bg-gray-100 rounded-3xl relative flex items-center">
                 <textarea
                   value={inputValue}
