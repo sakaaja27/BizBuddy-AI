@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
-import { Package, Plus, Sparkles, ArrowRight, Search, List, Grid, GripVertical, Loader2, X, Check, Trash2, Edit2 } from 'lucide-react';
+import { Package, Plus, Sparkles, ArrowRight, Search, List, Grid, GripVertical, Loader2, X, Check, Trash2, Edit2, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
@@ -30,6 +30,7 @@ const Orders = () => {
   const [selectedProductId, setSelectedProductId] = useState('');
   const [selectedQty, setSelectedQty] = useState(1);
   const [deleteOrderId, setDeleteOrderId] = useState(null);
+  const [stockErrorModal, setStockErrorModal] = useState({ isOpen: false, errorData: null, orderId: null, newStatus: null, orderIndex: null, oldStatus: null });
   
   const [filter, setFilter] = useState('Semua');
   const [searchQuery, setSearchQuery] = useState('');
@@ -215,14 +216,51 @@ const Orders = () => {
     setOrders(newOrders);
 
     try {
-      await axios.patch(`/orders/${draggableId}/status`, { status: newStatus });
+      const { data } = await axios.patch(`/orders/${draggableId}/status`, { status: newStatus });
+      if (data.stockAlerts && data.stockAlerts.length > 0) {
+        toast.error(`⚠️ Stok ${data.stockAlerts.join(', ')} sekarang kritis!`, { duration: 5000, icon: '⚠️' });
+      }
     } catch (error) {
-      console.error('Error updating status:', error);
       // Revert if error
       const revertOrders = Array.from(orders);
       revertOrders[orderIndex].status = oldStatus;
       setOrders(revertOrders);
-      toast.error('Gagal mengupdate status pesanan.');
+
+      if (error.response?.data?.error === 'INSUFFICIENT_STOCK') {
+        setStockErrorModal({
+          isOpen: true,
+          errorData: error.response.data,
+          orderId: draggableId,
+          newStatus,
+          orderIndex,
+          oldStatus
+        });
+      } else {
+        console.error('Error updating status:', error);
+        toast.error('Gagal mengupdate status pesanan.');
+      }
+    }
+  };
+
+  const forceUpdateStatus = async () => {
+    const { orderId, newStatus, orderIndex, oldStatus } = stockErrorModal;
+    setStockErrorModal({ ...stockErrorModal, isOpen: false });
+    
+    const newOrders = Array.from(orders);
+    newOrders[orderIndex].status = newStatus;
+    setOrders(newOrders);
+
+    try {
+      const { data } = await axios.patch(`/orders/${orderId}/status`, { status: newStatus, force: true });
+      if (data.stockAlerts && data.stockAlerts.length > 0) {
+        toast.error(`⚠️ Stok ${data.stockAlerts.join(', ')} sekarang kritis!`);
+      }
+      toast.success('Status dipaksa update meskipun stok kurang');
+    } catch (error) {
+      const revertOrders = Array.from(orders);
+      revertOrders[orderIndex].status = oldStatus;
+      setOrders(revertOrders);
+      toast.error('Tetap gagal mengupdate status pesanan.');
     }
   };
 
@@ -380,25 +418,58 @@ const Orders = () => {
 
         {/* AI Parse Result Preview */}
         {aiParsedResult && (
-          <div className="bg-orange-50/50 border border-orange-200 rounded-2xl p-5 mb-8 animate-fade-in shadow-sm">
+          <div className="bg-white border border-gray-100 rounded-2xl p-5 mb-8 shadow-sm animate-fade-in">
             <div className="flex justify-between items-start mb-4">
               <h3 className="font-bold text-gray-900 flex items-center">
-                <span className="text-xl mr-2">🤖</span> AI memahami pesanan ini:
+                <Check size={18} className="text-green-500 mr-2" />
+                Preview Pesanan dari AI
               </h3>
               <button onClick={() => setAiParsedResult(null)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-700 mb-5">
-              <div><span className="text-gray-500">Pelanggan:</span> <span className="font-bold text-gray-900">{aiParsedResult.customerName}</span></div>
-              <div><span className="text-gray-500">Tipe / Info:</span> <span className="font-bold text-gray-900">{aiParsedResult.orderType} {aiParsedResult.tableNumber ? `(Meja ${aiParsedResult.tableNumber})` : ''} {aiParsedResult.address ? `(${aiParsedResult.address})` : ''}</span></div>
-            </div>
             
-            <div className="bg-white rounded-xl border border-orange-100 p-4 mb-5">
-              <h4 className="text-xs font-bold text-gray-500 uppercase mb-3 tracking-wider">Detail Item</h4>
-              <div className="space-y-2">
-                {aiParsedResult.items.map((item, idx) => (
-                  <div key={idx} className="flex justify-between items-center text-sm">
+            {/* AI Warnings */}
+            {aiParsedResult.confidence < 0.7 && (
+              <div className="bg-yellow-50 text-yellow-800 text-sm p-3 rounded-xl mb-4 border border-yellow-200 flex items-center">
+                <AlertTriangle size={16} className="mr-2 shrink-0" />
+                AI kurang yakin dengan pesanan ini. Mohon periksa kembali.
+              </div>
+            )}
+            
+            {aiParsedResult.notFound && aiParsedResult.notFound.length > 0 && (
+              <div className="bg-red-50 text-red-800 text-sm p-3 rounded-xl mb-4 border border-red-200">
+                <div className="flex items-center font-bold mb-1"><AlertTriangle size={16} className="mr-2" /> Produk tidak ditemukan di menu:</div>
+                <ul className="list-disc pl-8">
+                  {aiParsedResult.notFound.map((item, i) => <li key={i}>{item}</li>)}
+                </ul>
+              </div>
+            )}
+            
+            {aiParsedResult.insufficientStock && aiParsedResult.insufficientStock.length > 0 && (
+              <div className="bg-orange-50 text-orange-800 text-sm p-3 rounded-xl mb-4 border border-orange-200">
+                <div className="flex items-center font-bold mb-1"><AlertTriangle size={16} className="mr-2" /> Stok tidak cukup:</div>
+                <ul className="list-disc pl-8">
+                  {aiParsedResult.insufficientStock.map((item, i) => (
+                    <li key={i}>{item.name}: diminta {item.requested}, tersedia {item.available}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <p className="text-xs text-gray-500 mb-1">Pelanggan</p>
+                <p className="font-bold">{aiParsedResult.customerName}</p>
+                <p className="text-sm text-gray-600 mt-2 capitalize">
+                  {aiParsedResult.orderType === 'meja' ? `Meja ${aiParsedResult.tableNumber}` : aiParsedResult.orderType}
+                </p>
+              </div>
+              
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <p className="text-xs text-gray-500 mb-2">Item Pesanan ({aiParsedResult.items?.length})</p>
+                {aiParsedResult.items?.map((item, i) => (
+                  <div key={i} className="flex justify-between text-sm mb-1">
                     <span className="font-medium">{item.qty}x {item.productName}</span>
-                    <span className="text-gray-600">Rp {item.subtotal.toLocaleString('id-ID')}</span>
+                    <span className="text-gray-600">Rp {item.subtotal?.toLocaleString('id-ID')}</span>
                   </div>
                 ))}
                 {aiParsedResult.notes && (
@@ -406,7 +477,7 @@ const Orders = () => {
                 )}
                 <div className="flex justify-between items-center pt-3 mt-3 border-t border-gray-100">
                   <span className="font-bold">Total:</span>
-                  <span className="font-bold text-primary">Rp {aiParsedResult.totalAmount.toLocaleString('id-ID')}</span>
+                  <span className="font-bold text-primary">Rp {aiParsedResult.totalAmount?.toLocaleString('id-ID')}</span>
                 </div>
               </div>
             </div>
@@ -417,17 +488,17 @@ const Orders = () => {
                 // Pre-fill the edit modal with AI result
                 setEditingOrderId(null);
                 setNewOrder({
-                  customerName: aiParsedResult.customerName,
-                  orderType: aiParsedResult.orderType,
+                  customerName: aiParsedResult.customerName || '',
+                  orderType: aiParsedResult.orderType || 'meja',
                   tableNumber: aiParsedResult.tableNumber || '',
                   address: aiParsedResult.address || '',
-                  items: aiParsedResult.items,
+                  items: aiParsedResult.items || [],
                   notes: aiParsedResult.notes || ''
                 });
                 setAiParsedResult(null);
                 setIsModalOpen(true);
               }} className="px-5 py-2 border border-primary text-primary hover:bg-orange-50 font-bold rounded-xl transition-colors text-sm">Edit Manual</button>
-              <button onClick={handleAiConfirm} className="px-5 py-2 bg-primary hover:bg-orange-600 text-white font-bold rounded-xl shadow-md shadow-primary/20 transition-colors text-sm flex items-center">
+              <button onClick={handleAiConfirm} disabled={aiParsedResult.insufficientStock?.length > 0 || aiParsedResult.notFound?.length > 0} className="px-5 py-2 bg-primary hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-md shadow-primary/20 transition-colors text-sm flex items-center">
                 <Check size={16} className="mr-2" /> Konfirmasi Tambah
               </button>
             </div>
@@ -673,6 +744,48 @@ const Orders = () => {
           </div>
         )}
       </div>
+      {stockErrorModal.isOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-slide-up border-t-4 border-red-500">
+            <div className="p-6 text-center">
+              <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+                <AlertTriangle size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Stok Tidak Cukup!</h3>
+              <p className="text-gray-600 text-sm mb-4">
+                Stok <span className="font-bold">{stockErrorModal.errorData?.product}</span> tidak mencukupi untuk pesanan ini.
+              </p>
+              <div className="bg-gray-50 rounded-xl p-3 flex justify-around mb-6 border border-gray-100">
+                <div>
+                  <p className="text-xs text-gray-500">Tersedia</p>
+                  <p className="font-bold text-lg text-gray-900">{stockErrorModal.errorData?.available}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Dibutuhkan</p>
+                  <p className="font-bold text-lg text-red-500">{stockErrorModal.errorData?.requested}</p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 italic mb-6">Apakah Anda ingin tetap melanjutkan proses pesanan ini meskipun stok tercatat kurang?</p>
+              
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setStockErrorModal({ ...stockErrorModal, isOpen: false })} 
+                  className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  Batal
+                </button>
+                <button 
+                  onClick={forceUpdateStatus} 
+                  className="flex-1 py-2.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-md shadow-red-500/20 transition-colors"
+                >
+                  Lanjutkan Anyway
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </DashboardLayout>
   );
 };

@@ -11,6 +11,7 @@ const Business = require('./models/Business');
 const Product = require('./models/Product');
 const Order = require('./models/Order');
 const Review = require('./models/Review');
+const StockMovement = require('./models/StockMovement');
 
 mongoose.set('strictQuery', false);
 
@@ -25,6 +26,7 @@ const seedDatabase = async () => {
     await Product.deleteMany();
     await Order.deleteMany();
     await Review.deleteMany();
+    await StockMovement.deleteMany();
     console.log('Cleared existing data.');
 
     // 1. Create Demo User
@@ -52,13 +54,14 @@ const seedDatabase = async () => {
     });
     console.log('Created Business Profile.');
 
-    // 3. Create Products (mixed stock levels)
+    // 3. Create Products (mixed stock levels, new schema)
     const productsData = [
-      { name: 'Nasi Goreng Spesial', category: 'Makanan', price: 25000, stock: 45 },
-      { name: 'Ayam Penyet', category: 'Makanan', price: 20000, stock: 8 }, // Kritis
-      { name: 'Es Teh Manis', category: 'Minuman', price: 5000, stock: 100 },
-      { name: 'Mie Tek-Tek', category: 'Makanan', price: 15000, stock: 12 }, // Warning
-      { name: 'Sate Ayam (10 tusuk)', category: 'Makanan', price: 30000, stock: 5 }, // Kritis
+      { name: 'Nasi Goreng Spesial', category: 'Makanan', sellPrice: 25000, buyPrice: 15000, stock: 45, minStock: 20, unit: 'porsi', isActive: true },
+      { name: 'Ayam Penyet', category: 'Makanan', sellPrice: 20000, buyPrice: 12000, stock: 8, minStock: 10, unit: 'porsi', isActive: true }, // Kritis
+      { name: 'Es Teh Manis', category: 'Minuman', sellPrice: 5000, buyPrice: 2000, stock: 100, minStock: 20, unit: 'gelas', isActive: true },
+      { name: 'Mie Tek-Tek', category: 'Makanan', sellPrice: 15000, buyPrice: 8000, stock: 12, minStock: 15, unit: 'porsi', isActive: true }, // Hampir habis
+      { name: 'Sate Ayam (10 tusuk)', category: 'Makanan', sellPrice: 30000, buyPrice: 18000, stock: 5, minStock: 10, unit: 'porsi', isActive: true }, // Kritis
+      { name: 'Kopi Susu Aren', category: 'Minuman', sellPrice: 18000, buyPrice: 8000, stock: 0, minStock: 15, unit: 'cup', isActive: true }, // Habis total
     ];
 
     for (const p of productsData) {
@@ -72,13 +75,12 @@ const seedDatabase = async () => {
 
     // 4. Create Recent Orders (Today)
     const today = new Date();
-    // Assuming the products we just created: 
-    // 0: Nasi Goreng (25k), 1: Ayam Penyet (20k), 2: Es Teh (5k), 3: Mie Tek-Tek (15k), 4: Sate (30k)
     const pNasi = await Product.findOne({ name: 'Nasi Goreng Spesial' });
     const pAyam = await Product.findOne({ name: 'Ayam Penyet' });
     const pTeh = await Product.findOne({ name: 'Es Teh Manis' });
     const pMie = await Product.findOne({ name: 'Mie Tek-Tek' });
     const pSate = await Product.findOne({ name: 'Sate Ayam (10 tusuk)' });
+    const pKopi = await Product.findOne({ name: 'Kopi Susu Aren' });
 
     const ordersData = [
       { 
@@ -142,6 +144,46 @@ const seedDatabase = async () => {
       });
     }
     console.log('Created 5 Recent Orders.');
+
+    // 4.5. Create Stock Movement (7 Days History)
+    const stockMovements = [];
+    const productsList = [pNasi, pAyam, pTeh, pMie, pSate, pKopi];
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      
+      // Random OUT movements for all products
+      productsList.forEach(p => {
+        const outQty = Math.floor(Math.random() * 20) + 1; // 1 to 20
+        stockMovements.push({
+          businessId: business._id,
+          productId: p._id,
+          productName: p.name,
+          type: 'out',
+          quantity: outQty,
+          notes: 'Penjualan Harian',
+          createdAt: date
+        });
+        
+        // Random IN movements (less frequent)
+        if (Math.random() > 0.7) {
+          const inQty = Math.floor(Math.random() * 50) + 20;
+          stockMovements.push({
+            businessId: business._id,
+            productId: p._id,
+            productName: p.name,
+            type: 'in',
+            quantity: inQty,
+            notes: 'Restock Mingguan',
+            createdAt: date
+          });
+        }
+      });
+    }
+
+    await StockMovement.insertMany(stockMovements);
+    console.log('Created Stock Movements for 7 days.');
 
     // 5. Create Sample Reviews
     const reviewsData = [

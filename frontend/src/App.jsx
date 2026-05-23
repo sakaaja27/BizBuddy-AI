@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Orders from './pages/Orders';
 import Reviews from './pages/Reviews';
 import AiAssistant from './pages/AiAssistant';
+import Inventory from './pages/Inventory';
 import ProtectedRoute from './components/ProtectedRoute';
 import useAuthStore from './store/useAuthStore';
 import axios from 'axios';
@@ -62,6 +63,14 @@ const App = () => {
           element={
             <ProtectedRoute>
               <Orders />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/dashboard/inventory" 
+          element={
+            <ProtectedRoute>
+              <Inventory />
             </ProtectedRoute>
           } 
         />
