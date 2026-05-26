@@ -299,22 +299,19 @@ const Orders = () => {
     
     // Convert text colors dynamically using predefined Tailwind colors
     const colorMap = {
-      orange: { bg: 'bg-orange-50', header: 'bg-orange-100', dot: 'bg-orange-500', text: 'text-orange-700' },
-      yellow: { bg: 'bg-yellow-50', header: 'bg-yellow-100', dot: 'bg-yellow-500', text: 'text-yellow-700' },
-      blue: { bg: 'bg-blue-50', header: 'bg-blue-100', dot: 'bg-blue-500', text: 'text-blue-700' },
-      green: { bg: 'bg-green-50', header: 'bg-green-100', dot: 'bg-green-500', text: 'text-green-700' },
-      gold: { bg: 'bg-amber-50', header: 'bg-amber-100', dot: 'bg-amber-500', text: 'text-amber-700' }
+      orange: { bg: 'bg-orange-100', header: 'bg-orange-500' },
+      yellow: { bg: 'bg-yellow-100', header: 'bg-yellow-500' },
+      blue: { bg: 'bg-blue-100', header: 'bg-blue-500' },
+      green: { bg: 'bg-green-100', header: 'bg-green-500' },
+      gold: { bg: 'bg-amber-100', header: 'bg-amber-500' }
     };
     const c = colorMap[color] || colorMap.orange;
 
     return (
     <div key={key} className="flex-1 min-w-[280px] flex flex-col h-full">
-      <div className={`flex items-center justify-between p-3 rounded-t-xl ${c.header} border-b border-gray-100`}>
-        <div className="flex items-center gap-2">
-          <div className={`w-2.5 h-2.5 rounded-full ${c.dot}`}></div>
-          <h3 className="font-bold text-gray-900">{label}</h3>
-        </div>
-        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${c.dot} text-white`}>
+      <div className={`flex items-center justify-between p-3 rounded-t-xl ${c.header} text-white`}>
+        <h3 className="font-bold">{label}</h3>
+        <span className="bg-white/20 px-2 py-0.5 rounded-full text-xs font-bold">
           {items.length}
         </span>
       </div>
@@ -325,7 +322,7 @@ const Orders = () => {
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={`flex-1 p-3 rounded-b-xl border border-t-0 border-gray-100 min-h-[500px] transition-colors
-              ${snapshot.isDraggingOver ? 'bg-orange-50/50 border-orange-200 border-dashed' : c.bg}`}
+              ${snapshot.isDraggingOver ? 'bg-gray-100 border-gray-200 border-dashed' : c.bg}`}
           >
             {items.map((order, index) => (
               <Draggable key={order._id} draggableId={order._id} index={index}>
@@ -381,7 +378,7 @@ const Orders = () => {
                     </div>
 
                     <div className="flex justify-between items-end mt-4 pt-3 border-t border-gray-50">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${c.header} ${c.text}`}>
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${c.header} text-white`}>
                         {label}
                       </span>
                       <span className="font-bold text-gray-900 text-sm">Rp {order.totalAmount?.toLocaleString('id-ID')}</span>
@@ -589,17 +586,16 @@ const Orders = () => {
 
         {/* Manual Add/Edit Order Modal */}
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-900/40 backdrop-blur-sm animate-fade-in">
-            <div className="flex min-h-full items-center justify-center p-4 py-10">
-              <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl animate-slide-up">
-                <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-gray-50/50">
-                  <h3 className="font-bold text-gray-900 text-lg">
-                    {editingOrderId ? 'Edit Pesanan' : 'Tambah Pesanan Manual'}
-                  </h3>
-                  <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:bg-gray-100 p-1.5 rounded-lg transition-colors"><X size={20} /></button>
-                </div>
-                
-                <div className="p-6 space-y-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden animate-slide-up flex flex-col max-h-[90vh]">
+              <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-gray-50/50">
+                <h3 className="font-bold text-gray-900 text-lg">
+                  {editingOrderId ? 'Edit Pesanan' : 'Tambah Pesanan Manual'}
+                </h3>
+                <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:bg-gray-100 p-1.5 rounded-lg transition-colors"><X size={20} /></button>
+              </div>
+              
+              <div className="p-6 overflow-y-auto flex-1 space-y-4">
                 {/* Row 1: Nama + Tipe */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -802,7 +798,6 @@ const Orders = () => {
                 <button onClick={handleManualSubmit} className="px-6 py-2.5 bg-primary hover:bg-orange-600 text-white font-bold rounded-xl transition-colors shadow-md shadow-primary/20 flex items-center">
                   <Check size={18} className="mr-2" /> Simpan Pesanan
                 </button>
-                </div>
               </div>
             </div>
           </div>
