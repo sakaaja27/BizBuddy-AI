@@ -1,40 +1,65 @@
-import React, { useState, useEffect } from 'react';
-import DashboardLayout from '../components/layout/DashboardLayout';
-import { Package, Plus, Sparkles, ArrowRight, Search, List, Grid, GripVertical, Loader2, X, Check, Trash2, Edit2, AlertTriangle } from 'lucide-react';
-import axios from 'axios';
-import { toast } from 'react-hot-toast';
-import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import RecentOrdersTable from '../components/dashboard/RecentOrdersTable';
+import React, { useState, useEffect } from "react";
+import DashboardLayout from "../components/layout/DashboardLayout";
+import {
+  Package,
+  Plus,
+  Sparkles,
+  ArrowRight,
+  Search,
+  List,
+  Grid,
+  GripVertical,
+  Loader2,
+  X,
+  Check,
+  Trash2,
+  Edit2,
+  AlertTriangle,
+} from "lucide-react";
+import axios from "axios";
+import { toast } from "react-hot-toast";
+import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import RecentOrdersTable from "../components/dashboard/RecentOrdersTable";
 
 const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
-  const [viewMode, setViewMode] = useState('kanban'); // 'kanban' or 'table'
-  
+  const [viewMode, setViewMode] = useState("kanban"); // 'kanban' or 'table'
+
   // AI State
-  const [aiInput, setAiInput] = useState('');
+  const [aiInput, setAiInput] = useState("");
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [aiParsedResult, setAiParsedResult] = useState(null);
-  
+
   // Manual Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState(null);
   const [newOrder, setNewOrder] = useState({
-    customerName: '',
-    orderType: 'meja',
-    tableNumber: '',
-    address: '',
+    customerName: "",
+    orderType: "meja",
+    tableNumber: "",
+    address: "",
     items: [],
-    notes: ''
+    notes: "",
   });
-  const [selectedProductId, setSelectedProductId] = useState('');
+  const [selectedProductId, setSelectedProductId] = useState("");
   const [selectedQty, setSelectedQty] = useState(1);
   const [deleteOrderId, setDeleteOrderId] = useState(null);
-  const [stockErrorModal, setStockErrorModal] = useState({ isOpen: false, errorData: null, orderId: null, newStatus: null, orderIndex: null, oldStatus: null });
-  const [confirmDoneModal, setConfirmDoneModal] = useState({ isOpen: false, orderId: null });
-  
-  const [filter, setFilter] = useState('Semua');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [stockErrorModal, setStockErrorModal] = useState({
+    isOpen: false,
+    errorData: null,
+    orderId: null,
+    newStatus: null,
+    orderIndex: null,
+    oldStatus: null,
+  });
+  const [confirmDoneModal, setConfirmDoneModal] = useState({
+    isOpen: false,
+    orderId: null,
+  });
+
+  const [filter, setFilter] = useState("Semua");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -45,11 +70,16 @@ const Orders = () => {
   const fetchOrders = async () => {
     setIsLoading(true);
     try {
-      const filterParam = filter === 'Hari Ini' ? 'today' : filter === 'Minggu Ini' ? 'week' : 'all';
+      const filterParam =
+        filter === "Hari Ini"
+          ? "today"
+          : filter === "Minggu Ini"
+            ? "week"
+            : "all";
       const { data } = await axios.get(`/orders?filter=${filterParam}`);
       setOrders(data);
     } catch (error) {
-      console.error('Error fetching orders:', error);
+      console.error("Error fetching orders:", error);
     } finally {
       setIsLoading(false);
     }
@@ -57,10 +87,10 @@ const Orders = () => {
 
   const fetchProducts = async () => {
     try {
-      const { data } = await axios.get('/products');
+      const { data } = await axios.get("/products");
       setProducts(data);
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error("Error fetching products:", error);
     }
   };
 
@@ -69,11 +99,11 @@ const Orders = () => {
     if (!aiInput.trim()) return;
     setIsAiProcessing(true);
     try {
-      const { data } = await axios.post('/orders/ai-parse', { text: aiInput });
+      const { data } = await axios.post("/orders/ai-parse", { text: aiInput });
       setAiParsedResult(data);
     } catch (error) {
-      console.error('AI Parse error:', error);
-      toast.error('Gagal memproses pesanan dengan AI. Silakan coba lagi.');
+      console.error("AI Parse error:", error);
+      toast.error("Gagal memproses pesanan dengan AI. Silakan coba lagi.");
     } finally {
       setIsAiProcessing(false);
     }
@@ -81,20 +111,20 @@ const Orders = () => {
 
   const handleAiConfirm = async () => {
     try {
-      const { data } = await axios.post('/orders', aiParsedResult);
+      const { data } = await axios.post("/orders", aiParsedResult);
       setOrders([data, ...orders]);
       setAiParsedResult(null);
-      setAiInput('');
-      toast.success('Pesanan berhasil ditambahkan!');
+      setAiInput("");
+      toast.success("Pesanan berhasil ditambahkan!");
     } catch (error) {
-      console.error('Error creating order:', error);
-      toast.error('Gagal menyimpan pesanan.');
+      console.error("Error creating order:", error);
+      toast.error("Gagal menyimpan pesanan.");
     }
   };
 
   const handleAddItem = () => {
     if (!selectedProductId || selectedQty < 1) return;
-    const product = products.find(p => p._id === selectedProductId);
+    const product = products.find((p) => p._id === selectedProductId);
     if (!product) return;
 
     const newItem = {
@@ -102,14 +132,14 @@ const Orders = () => {
       productName: product.name,
       qty: parseInt(selectedQty, 10),
       price: product.sellPrice,
-      subtotal: product.sellPrice * selectedQty
+      subtotal: product.sellPrice * selectedQty,
     };
 
     setNewOrder({
       ...newOrder,
-      items: [...newOrder.items, newItem]
+      items: [...newOrder.items, newItem],
     });
-    setSelectedProductId('');
+    setSelectedProductId("");
     setSelectedQty(1);
   };
 
@@ -122,14 +152,14 @@ const Orders = () => {
   const openAddModal = () => {
     setEditingOrderId(null);
     setNewOrder({
-      customerName: '',
-      orderType: 'meja',
-      tableNumber: '',
-      address: '',
+      customerName: "",
+      orderType: "meja",
+      tableNumber: "",
+      address: "",
       items: [],
-      notes: ''
+      notes: "",
     });
-    setSelectedProductId('');
+    setSelectedProductId("");
     setSelectedQty(1);
     setIsModalOpen(true);
   };
@@ -138,13 +168,13 @@ const Orders = () => {
     setEditingOrderId(order._id);
     setNewOrder({
       customerName: order.customerName,
-      orderType: order.orderType || 'meja',
-      tableNumber: order.tableNumber || '',
-      address: order.address || '',
+      orderType: order.orderType || "meja",
+      tableNumber: order.tableNumber || "",
+      address: order.address || "",
       items: order.items,
-      notes: order.notes || ''
+      notes: order.notes || "",
     });
-    setSelectedProductId('');
+    setSelectedProductId("");
     setSelectedQty(1);
     setIsModalOpen(true);
   };
@@ -157,11 +187,11 @@ const Orders = () => {
     if (!deleteOrderId) return;
     try {
       await axios.delete(`/orders/${deleteOrderId}`);
-      setOrders(orders.filter(o => o._id !== deleteOrderId));
-      toast.success('Pesanan berhasil dihapus');
+      setOrders(orders.filter((o) => o._id !== deleteOrderId));
+      toast.success("Pesanan berhasil dihapus");
     } catch (error) {
-      console.error('Error deleting order:', error);
-      toast.error('Gagal menghapus pesanan');
+      console.error("Error deleting order:", error);
+      toast.error("Gagal menghapus pesanan");
     } finally {
       setDeleteOrderId(null);
     }
@@ -169,50 +199,55 @@ const Orders = () => {
 
   const handleManualSubmit = async () => {
     if (!newOrder.customerName) {
-      toast.error('Nama pelanggan wajib diisi');
+      toast.error("Nama pelanggan wajib diisi");
       return;
     }
     if (newOrder.items.length === 0) {
-      toast.error('Tambahkan minimal 1 item pesanan');
+      toast.error("Tambahkan minimal 1 item pesanan");
       return;
     }
-    if (newOrder.orderType === 'meja' && !newOrder.tableNumber) {
-      toast.error('Nomor meja wajib diisi untuk pesanan Meja');
+    if (newOrder.orderType === "meja" && !newOrder.tableNumber) {
+      toast.error("Nomor meja wajib diisi untuk pesanan Meja");
       return;
     }
-    if (newOrder.orderType === 'delivery' && !newOrder.address) {
-      toast.error('Alamat wajib diisi untuk pesanan Delivery');
+    if (newOrder.orderType === "delivery" && !newOrder.address) {
+      toast.error("Alamat wajib diisi untuk pesanan Delivery");
       return;
     }
 
     try {
       if (editingOrderId) {
         const { data } = await axios.put(`/orders/${editingOrderId}`, newOrder);
-        setOrders(orders.map(o => (o._id === editingOrderId ? data : o)));
-        toast.success('Pesanan berhasil diperbarui!');
+        setOrders(orders.map((o) => (o._id === editingOrderId ? data : o)));
+        toast.success("Pesanan berhasil diperbarui!");
       } else {
-        const { data } = await axios.post('/orders', newOrder);
+        const { data } = await axios.post("/orders", newOrder);
         setOrders([data, ...orders]);
-        toast.success('Pesanan berhasil ditambahkan!');
+        toast.success("Pesanan berhasil ditambahkan!");
       }
       setIsModalOpen(false);
     } catch (error) {
-      console.error('Error submitting order:', error);
-      toast.error('Gagal menyimpan pesanan.');
+      console.error("Error submitting order:", error);
+      toast.error("Gagal menyimpan pesanan.");
     }
   };
 
   const processStatusChange = async (orderId, newStatus) => {
     const newOrders = Array.from(orders);
-    const orderIndex = newOrders.findIndex(o => o._id === orderId);
+    const orderIndex = newOrders.findIndex((o) => o._id === orderId);
     const oldStatus = newOrders[orderIndex].status;
     newOrders[orderIndex].status = newStatus;
     setOrders(newOrders);
 
     try {
-      const { data } = await axios.patch(`/orders/${orderId}/status`, { status: newStatus });
+      const { data } = await axios.patch(`/orders/${orderId}/status`, {
+        status: newStatus,
+      });
       if (data.stockAlerts && data.stockAlerts.length > 0) {
-        toast.error(`⚠️ Stok ${data.stockAlerts.join(', ')} sekarang kritis!`, { duration: 5000, icon: '⚠️' });
+        toast.error(`⚠️ Stok ${data.stockAlerts.join(", ")} sekarang kritis!`, {
+          duration: 5000,
+          icon: "⚠️",
+        });
       }
     } catch (error) {
       // Revert if error
@@ -220,18 +255,18 @@ const Orders = () => {
       revertOrders[orderIndex].status = oldStatus;
       setOrders(revertOrders);
 
-      if (error.response?.data?.error === 'INSUFFICIENT_STOCK') {
+      if (error.response?.data?.error === "INSUFFICIENT_STOCK") {
         setStockErrorModal({
           isOpen: true,
           errorData: error.response.data,
           orderId,
           newStatus,
           orderIndex,
-          oldStatus
+          oldStatus,
         });
       } else {
-        console.error('Error updating status:', error);
-        toast.error('Gagal mengupdate status pesanan.');
+        console.error("Error updating status:", error);
+        toast.error("Gagal mengupdate status pesanan.");
       }
     }
   };
@@ -239,18 +274,22 @@ const Orders = () => {
   const onDragEnd = async (result) => {
     const { destination, source, draggableId } = result;
     if (!destination) return;
-    if (destination.droppableId === source.droppableId && destination.index === source.index) return;
-    
+    if (
+      destination.droppableId === source.droppableId &&
+      destination.index === source.index
+    )
+      return;
+
     // Cegah order yang sudah selesai dipindah lagi
-    if (source.droppableId === 'done') {
-      toast.error('Pesanan yang sudah selesai tidak dapat diubah statusnya!');
+    if (source.droppableId === "done") {
+      toast.error("Pesanan yang sudah selesai tidak dapat diubah statusnya!");
       return;
     }
 
     const newStatus = destination.droppableId;
-    
+
     // Minta konfirmasi jika dipindah ke selesai
-    if (newStatus === 'done') {
+    if (newStatus === "done") {
       setConfirmDoneModal({ isOpen: true, orderId: draggableId });
       return;
     }
@@ -260,7 +299,7 @@ const Orders = () => {
 
   const executeConfirmDone = async () => {
     if (confirmDoneModal.orderId) {
-      await processStatusChange(confirmDoneModal.orderId, 'done');
+      await processStatusChange(confirmDoneModal.orderId, "done");
     }
     setConfirmDoneModal({ isOpen: false, orderId: null });
   };
@@ -268,52 +307,63 @@ const Orders = () => {
   const forceUpdateStatus = async () => {
     const { orderId, newStatus, orderIndex, oldStatus } = stockErrorModal;
     setStockErrorModal({ ...stockErrorModal, isOpen: false });
-    
+
     const newOrders = Array.from(orders);
     newOrders[orderIndex].status = newStatus;
     setOrders(newOrders);
 
     try {
-      const { data } = await axios.patch(`/orders/${orderId}/status`, { status: newStatus, force: true });
+      const { data } = await axios.patch(`/orders/${orderId}/status`, {
+        status: newStatus,
+        force: true,
+      });
       if (data.stockAlerts && data.stockAlerts.length > 0) {
-        toast.error(`⚠️ Stok ${data.stockAlerts.join(', ')} sekarang kritis!`);
+        toast.error(`⚠️ Stok ${data.stockAlerts.join(", ")} sekarang kritis!`);
       }
-      toast.success('Status dipaksa update meskipun stok kurang');
+      toast.success("Status dipaksa update meskipun stok kurang");
     } catch (error) {
       const revertOrders = Array.from(orders);
       revertOrders[orderIndex].status = oldStatus;
       setOrders(revertOrders);
-      toast.error('Tetap gagal mengupdate status pesanan.');
+      toast.error("Tetap gagal mengupdate status pesanan.");
     }
   };
 
-  const filteredOrders = orders.filter(o => o.customerName.toLowerCase().includes(searchQuery.toLowerCase()));
+  const filteredOrders = orders.filter((o) =>
+    o.customerName.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
-  const pendingOrders = filteredOrders.filter(o => o.status === 'pending');
-  const processingOrders = filteredOrders.filter(o => o.status === 'processing');
-  const doneOrders = filteredOrders.filter(o => o.status === 'done');
+  const pendingOrders = filteredOrders.filter((o) => o.status === "pending");
+  const processingOrders = filteredOrders.filter(
+    (o) => o.status === "processing",
+  );
+  const doneOrders = filteredOrders.filter((o) => o.status === "done");
 
   // const manualOrderTotal = newOrder.items.reduce((sum, item) => sum + item.subtotal, 0);
 
   const renderKanbanColumn = (title, id, items, headerBg, dotColor) => (
     <div className="flex-1 min-w-[280px] flex flex-col h-full">
-      <div className={`flex items-center justify-between p-3 rounded-t-xl ${headerBg} border-b border-gray-100`}>
+      <div
+        className={`flex items-center justify-between p-3 rounded-t-xl ${headerBg} border-b border-gray-100`}
+      >
         <div className="flex items-center gap-2">
           <div className={`w-2.5 h-2.5 rounded-full ${dotColor}`}></div>
           <h3 className="font-bold text-gray-900">{title}</h3>
         </div>
-        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${dotColor === 'bg-orange-500' ? 'bg-orange-500 text-white' : dotColor === 'bg-yellow-500' ? 'bg-yellow-500 text-white' : 'bg-green-500 text-white'}`}>
+        <span
+          className={`px-2 py-0.5 rounded-full text-xs font-bold ${dotColor === "bg-orange-500" ? "bg-orange-500 text-white" : dotColor === "bg-yellow-500" ? "bg-yellow-500 text-white" : "bg-green-500 text-white"}`}
+        >
           {items.length}
         </span>
       </div>
-      
+
       <Droppable droppableId={id}>
         {(provided, snapshot) => (
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={`flex-1 p-3 rounded-b-xl border border-t-0 border-gray-100 min-h-[500px] transition-colors
-              ${snapshot.isDraggingOver ? 'bg-orange-50/50 border-orange-200 border-dashed' : id === 'pending' ? 'bg-orange-50' : id === 'processing' ? 'bg-yellow-50' : 'bg-green-50'}`}
+              ${snapshot.isDraggingOver ? "bg-orange-50/50 border-orange-200 border-dashed" : id === "pending" ? "bg-orange-50" : id === "processing" ? "bg-yellow-50" : "bg-green-50"}`}
           >
             {items.map((order, index) => (
               <Draggable key={order._id} draggableId={order._id} index={index}>
@@ -323,25 +373,32 @@ const Orders = () => {
                     {...provided.draggableProps}
                     {...provided.dragHandleProps}
                     className={`bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-3 group relative
-                      ${snapshot.isDragging ? 'rotate-3 shadow-xl opacity-90 scale-[1.02] cursor-grabbing border-primary' : 'hover:shadow-md hover:scale-[1.01] transition-all cursor-grab'}`}
+                        ${snapshot.isDragging ? "shadow-xl opacity-95 cursor-grabbing border-primary" : "hover:shadow-md hover:cursor-grab transition-shadow duration-150"}`}
                   >
                     <div className="flex justify-between items-start mb-2">
                       <div className="flex items-center gap-2">
-                        <span className="text-primary text-xs font-bold">{order.orderNumber}</span>
-                        <span className="text-gray-400 text-[10px] font-medium">{new Date(order.createdAt).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'})}</span>
+                        <span className="text-primary text-xs font-bold">
+                          {order.orderNumber}
+                        </span>
+                        <span className="text-gray-400 text-[10px] font-medium">
+                          {new Date(order.createdAt).toLocaleTimeString(
+                            "id-ID",
+                            { hour: "2-digit", minute: "2-digit" },
+                          )}
+                        </span>
                       </div>
-                      
-                      <div className="flex items-center gap-1">
-                        {id === 'pending' && (
+
+                      <div className="flex items-center gap-1 cursor-grab active:cursor-grabbing">
+                        {id === "pending" && (
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center bg-white rounded-lg shadow-sm border border-gray-100 p-0.5">
-                            <button 
+                            <button
                               onClick={() => openEditModal(order)}
                               className="p-1 text-gray-400 hover:text-blue-500 rounded-md transition-colors"
                               title="Edit Pesanan"
                             >
                               <Edit2 size={14} />
                             </button>
-                            <button 
+                            <button
                               onClick={() => promptDeleteOrder(order._id)}
                               className="p-1 text-gray-400 hover:text-red-500 rounded-md transition-colors"
                               title="Hapus Pesanan"
@@ -350,29 +407,54 @@ const Orders = () => {
                             </button>
                           </div>
                         )}
-                        <GripVertical size={16} className={`text-gray-300 group-hover:text-gray-400 transition-colors ${id === 'pending' && 'ml-1'}`} />
+                        <GripVertical
+                          size={16}
+                          className={`text-gray-300 group-hover:text-gray-400 transition-colors ${id === "pending" && "ml-1"}`}
+                        />
                       </div>
                     </div>
-                    
+
                     <h4 className="font-bold text-gray-900 text-sm mb-2">
-                      {order.customerName} <span className="text-gray-500 font-normal">({order.orderType === 'meja' ? `Meja ${order.tableNumber}` : order.orderType})</span>
+                      {order.customerName}{" "}
+                      <span className="text-gray-500 font-normal">
+                        (
+                        {order.orderType === "meja"
+                          ? `Meja ${order.tableNumber}`
+                          : order.orderType}
+                        )
+                      </span>
                     </h4>
-                    
+
                     <div className="space-y-1 mb-3">
                       {order.items.map((item, i) => (
-                        <div key={i} className="flex justify-between text-xs text-gray-600">
-                          <span>{item.qty}x {item.productName}</span>
-                          <span>Rp {item.subtotal.toLocaleString('id-ID')}</span>
+                        <div
+                          key={i}
+                          className="flex justify-between text-xs text-gray-600"
+                        >
+                          <span>
+                            {item.qty}x {item.productName}
+                          </span>
+                          <span>
+                            Rp {item.subtotal.toLocaleString("id-ID")}
+                          </span>
                         </div>
                       ))}
                     </div>
 
                     <div className="flex justify-between items-end mt-4 pt-3 border-t border-gray-50">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider
-                        ${id === 'pending' ? 'bg-orange-100 text-orange-700' : id === 'processing' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
-                        {id === 'pending' ? 'Baru' : id === 'processing' ? 'Dimasak' : 'Diambil'}
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider
+                        ${id === "pending" ? "bg-orange-100 text-orange-700" : id === "processing" ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700"}`}
+                      >
+                        {id === "pending"
+                          ? "Baru"
+                          : id === "processing"
+                            ? "Dimasak"
+                            : "Diambil"}
                       </span>
-                      <span className="font-bold text-gray-900 text-sm">Rp {order.totalAmount?.toLocaleString('id-ID')}</span>
+                      <span className="font-bold text-gray-900 text-sm">
+                        Rp {order.totalAmount?.toLocaleString("id-ID")}
+                      </span>
                     </div>
                   </div>
                 )}
@@ -385,7 +467,10 @@ const Orders = () => {
     </div>
   );
 
-  const manualOrderTotal = newOrder.items.reduce((sum, item) => sum + (item.subtotal || 0), 0);
+  const manualOrderTotal = newOrder.items.reduce(
+    (sum, item) => sum + (item.subtotal || 0),
+    0,
+  );
 
   return (
     <DashboardLayout>
@@ -397,11 +482,15 @@ const Orders = () => {
               <Package size={24} />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Kelola Pesanan</h1>
-              <p className="text-gray-500 text-sm">Manajemen pesanan pelanggan secara real-time</p>
+              <h1 className="text-2xl font-bold text-gray-900">
+                Kelola Pesanan
+              </h1>
+              <p className="text-gray-500 text-sm">
+                Manajemen pesanan pelanggan secara real-time
+              </p>
             </div>
           </div>
-          <button 
+          <button
             onClick={openAddModal}
             className="w-full md:w-auto bg-primary hover:bg-orange-600 text-white px-6 py-2.5 rounded-full font-bold shadow-lg shadow-primary/20 flex items-center justify-center transition-colors"
           >
@@ -413,9 +502,15 @@ const Orders = () => {
         {/* AI Input Bar (Hero) */}
         <div className="mb-8">
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2 md:p-3 relative group">
-            <form onSubmit={handleAiSubmit} className="flex items-center gap-2 md:gap-3">
+            <form
+              onSubmit={handleAiSubmit}
+              className="flex items-center gap-2 md:gap-3"
+            >
               <div className="flex-shrink-0 pl-1 md:pl-2">
-                <Sparkles size={20} className="text-primary animate-pulse md:w-6 md:h-6" />
+                <Sparkles
+                  size={20}
+                  className="text-primary animate-pulse md:w-6 md:h-6"
+                />
               </div>
               <input
                 type="text"
@@ -429,109 +524,159 @@ const Orders = () => {
                 type="submit"
                 disabled={!aiInput || isAiProcessing || aiParsedResult}
                 className={`w-10 h-10 md:w-12 md:h-12 flex items-center justify-center rounded-xl transition-all shrink-0
-                  ${aiInput && !isAiProcessing && !aiParsedResult ? 'bg-primary hover:bg-orange-600 text-white shadow-md' : 'bg-gray-100 text-gray-400'}`}
+                  ${aiInput && !isAiProcessing && !aiParsedResult ? "bg-primary hover:bg-orange-600 text-white shadow-md" : "bg-gray-100 text-gray-400"}`}
               >
-                {isAiProcessing ? <Loader2 size={18} className="animate-spin md:w-5 md:h-5" /> : <ArrowRight size={18} className="md:w-5 md:h-5" />}
+                {isAiProcessing ? (
+                  <Loader2 size={18} className="animate-spin md:w-5 md:h-5" />
+                ) : (
+                  <ArrowRight size={18} className="md:w-5 md:h-5" />
+                )}
               </button>
             </form>
 
             <div className="absolute inset-0 rounded-2xl border-1.5 border-transparent pointer-events-none transition-colors group-focus-within:border-primary group-focus-within:shadow-[0_0_15px_rgba(249,115,22,0.15)]"></div>
           </div>
-          
+
           <div className="mt-2 ml-2 md:ml-4 text-[10px] md:text-xs text-gray-400 font-medium flex items-center">
-            <Sparkles size={12} className="mr-1 opacity-70 shrink-0" /> 
+            <Sparkles size={12} className="mr-1 opacity-70 shrink-0" />
             <span>AI otomatis mencatat pesanan dari teks Anda</span>
           </div>
         </div>
 
         {/* AI Parse Result Preview */}
-        {aiParsedResult && (!aiParsedResult.notFound || aiParsedResult.notFound.length === 0) && (
-          <div className="bg-white border border-gray-100 rounded-2xl p-5 mb-8 shadow-sm animate-fade-in">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="font-bold text-gray-900 flex items-center">
-                <Check size={18} className="text-green-500 mr-2" />
-                Preview Pesanan dari AI <span className="text-red-500 ml-2">(Cek Lagi Apakah Sudah Benar!)</span>
-              </h3>
-              <button onClick={() => setAiParsedResult(null)} className="text-gray-400 hover:text-gray-600"><X size={20} /></button>
-            </div>
-            
-            {/* AI Warnings */}
-            {aiParsedResult.confidence < 0.7 && (
-              <div className="bg-yellow-50 text-yellow-800 text-sm p-3 rounded-xl mb-4 border border-yellow-200 flex items-center">
-                <AlertTriangle size={16} className="mr-2 shrink-0" />
-                AI kurang yakin dengan pesanan ini. Mohon periksa kembali.
+        {aiParsedResult &&
+          (!aiParsedResult.notFound ||
+            aiParsedResult.notFound.length === 0) && (
+            <div className="bg-white border border-gray-100 rounded-2xl p-5 mb-8 shadow-sm animate-fade-in">
+              <div className="flex justify-between items-start mb-4">
+                <h3 className="font-bold text-gray-900 flex items-center">
+                  <Check size={18} className="text-green-500 mr-2" />
+                  Preview Pesanan dari AI{" "}
+                  <span className="text-red-500 ml-2">
+                    (Cek Lagi Apakah Sudah Benar!)
+                  </span>
+                </h3>
+                <button
+                  onClick={() => setAiParsedResult(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={20} />
+                </button>
               </div>
-            )}
-            
-            {aiParsedResult.insufficientStock && aiParsedResult.insufficientStock.length > 0 && (
-              <div className="bg-orange-50 text-orange-800 text-sm p-3 rounded-xl mb-4 border border-orange-200">
-                <div className="flex items-center font-bold mb-1"><AlertTriangle size={16} className="mr-2" /> Stok tidak cukup:</div>
-                <ul className="list-disc pl-8">
-                  {aiParsedResult.insufficientStock.map((item, i) => (
-                    <li key={i}>{item.name}: diminta {item.requested}, tersedia {item.available}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <p className="text-xs text-gray-500 mb-1">Pelanggan</p>
-                <p className="font-bold">{aiParsedResult.customerName}</p>
-                <p className="text-sm text-gray-600 mt-2 capitalize">
-                  {aiParsedResult.orderType === 'meja' ? `Meja ${aiParsedResult.tableNumber}` : aiParsedResult.orderType}
-                </p>
-              </div>
-              
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                <p className="text-xs text-gray-500 mb-2">Item Pesanan ({aiParsedResult.items?.length})</p>
-                {aiParsedResult.items?.map((item, i) => (
-                  <div key={i} className="flex justify-between text-sm mb-1">
-                    <span className="font-medium">{item.qty}x {item.productName}</span>
-                    <span className="text-gray-600">Rp {item.subtotal?.toLocaleString('id-ID')}</span>
+              {/* AI Warnings */}
+              {aiParsedResult.confidence < 0.7 && (
+                <div className="bg-yellow-50 text-yellow-800 text-sm p-3 rounded-xl mb-4 border border-yellow-200 flex items-center">
+                  <AlertTriangle size={16} className="mr-2 shrink-0" />
+                  AI kurang yakin dengan pesanan ini. Mohon periksa kembali.
+                </div>
+              )}
+
+              {aiParsedResult.insufficientStock &&
+                aiParsedResult.insufficientStock.length > 0 && (
+                  <div className="bg-orange-50 text-orange-800 text-sm p-3 rounded-xl mb-4 border border-orange-200">
+                    <div className="flex items-center font-bold mb-1">
+                      <AlertTriangle size={16} className="mr-2" /> Stok tidak
+                      cukup:
+                    </div>
+                    <ul className="list-disc pl-8">
+                      {aiParsedResult.insufficientStock.map((item, i) => (
+                        <li key={i}>
+                          {item.name}: diminta {item.requested}, tersedia{" "}
+                          {item.available}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                ))}
-                {aiParsedResult.notes && (
-                  <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded mt-2">Catatan: {aiParsedResult.notes}</div>
                 )}
-                <div className="flex justify-between items-center pt-3 mt-3 border-t border-gray-100">
-                  <span className="font-bold">Total:</span>
-                  <span className="font-bold text-primary">Rp {aiParsedResult.totalAmount?.toLocaleString('id-ID')}</span>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <p className="text-xs text-gray-500 mb-1">Pelanggan</p>
+                  <p className="font-bold">{aiParsedResult.customerName}</p>
+                  <p className="text-sm text-gray-600 mt-2 capitalize">
+                    {aiParsedResult.orderType === "meja"
+                      ? `Meja ${aiParsedResult.tableNumber}`
+                      : aiParsedResult.orderType}
+                  </p>
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <p className="text-xs text-gray-500 mb-2">
+                    Item Pesanan ({aiParsedResult.items?.length})
+                  </p>
+                  {aiParsedResult.items?.map((item, i) => (
+                    <div key={i} className="flex justify-between text-sm mb-1">
+                      <span className="font-medium">
+                        {item.qty}x {item.productName}
+                      </span>
+                      <span className="text-gray-600">
+                        Rp {item.subtotal?.toLocaleString("id-ID")}
+                      </span>
+                    </div>
+                  ))}
+                  {aiParsedResult.notes && (
+                    <div className="text-xs text-orange-600 bg-orange-50 p-2 rounded mt-2">
+                      Catatan: {aiParsedResult.notes}
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center pt-3 mt-3 border-t border-gray-100">
+                    <span className="font-bold">Total:</span>
+                    <span className="font-bold text-primary">
+                      Rp {aiParsedResult.totalAmount?.toLocaleString("id-ID")}
+                    </span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            <div className="flex gap-3 justify-end">
-              <button onClick={() => setAiParsedResult(null)} className="px-5 py-2 text-gray-500 hover:bg-gray-100 font-semibold rounded-xl transition-colors text-sm">Batal</button>
-              <button onClick={() => {
-                // Pre-fill the edit modal with AI result
-                setEditingOrderId(null);
-                setNewOrder({
-                  customerName: aiParsedResult.customerName || '',
-                  orderType: aiParsedResult.orderType || 'meja',
-                  tableNumber: aiParsedResult.tableNumber || '',
-                  address: aiParsedResult.address || '',
-                  items: aiParsedResult.items || [],
-                  notes: aiParsedResult.notes || ''
-                });
-                setAiParsedResult(null);
-                setIsModalOpen(true);
-              }} className="px-5 py-2 border border-primary text-primary hover:bg-orange-50 font-bold rounded-xl transition-colors text-sm">Edit Manual</button>
-              <button onClick={handleAiConfirm} disabled={aiParsedResult.insufficientStock?.length > 0 || aiParsedResult.notFound?.length > 0} className="px-5 py-2 bg-primary hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-md shadow-primary/20 transition-colors text-sm flex items-center">
-                <Check size={16} className="mr-2" /> Konfirmasi Tambah
-              </button>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setAiParsedResult(null)}
+                  className="px-5 py-2 text-gray-500 hover:bg-gray-100 font-semibold rounded-xl transition-colors text-sm"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={() => {
+                    // Pre-fill the edit modal with AI result
+                    setEditingOrderId(null);
+                    setNewOrder({
+                      customerName: aiParsedResult.customerName || "",
+                      orderType: aiParsedResult.orderType || "meja",
+                      tableNumber: aiParsedResult.tableNumber || "",
+                      address: aiParsedResult.address || "",
+                      items: aiParsedResult.items || [],
+                      notes: aiParsedResult.notes || "",
+                    });
+                    setAiParsedResult(null);
+                    setIsModalOpen(true);
+                  }}
+                  className="px-5 py-2 border border-primary text-primary hover:bg-orange-50 font-bold rounded-xl transition-colors text-sm"
+                >
+                  Edit Manual
+                </button>
+                <button
+                  onClick={handleAiConfirm}
+                  disabled={
+                    aiParsedResult.insufficientStock?.length > 0 ||
+                    aiParsedResult.notFound?.length > 0
+                  }
+                  className="px-5 py-2 bg-primary hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-md shadow-primary/20 transition-colors text-sm flex items-center"
+                >
+                  <Check size={16} className="mr-2" /> Konfirmasi Tambah
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Filter Bar */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
           <div className="flex bg-gray-100/80 p-1 rounded-xl w-full md:w-auto">
-            {['Semua', 'Hari Ini', 'Minggu Ini'].map(f => (
+            {["Semua", "Hari Ini", "Minggu Ini"].map((f) => (
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`flex-1 md:flex-none px-4 py-2 text-sm font-semibold rounded-lg transition-all ${filter === f ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                className={`flex-1 md:flex-none px-4 py-2 text-sm font-semibold rounded-lg transition-all ${filter === f ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
               >
                 {f}
               </button>
@@ -540,7 +685,10 @@ const Orders = () => {
 
           <div className="flex gap-3 w-full md:w-auto">
             <div className="relative flex-1 md:w-64">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={18}
+              />
               <input
                 type="text"
                 placeholder="Cari pelanggan..."
@@ -550,8 +698,18 @@ const Orders = () => {
               />
             </div>
             <div className="flex bg-white border border-gray-200 rounded-xl p-1">
-              <button onClick={() => setViewMode('kanban')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'kanban' ? 'bg-orange-50 text-primary' : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'}`}><Grid size={18} /></button>
-              <button onClick={() => setViewMode('table')} className={`p-1.5 rounded-lg transition-all ${viewMode === 'table' ? 'bg-orange-50 text-primary' : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'}`}><List size={18} /></button>
+              <button
+                onClick={() => setViewMode("kanban")}
+                className={`p-1.5 rounded-lg transition-all ${viewMode === "kanban" ? "bg-orange-50 text-primary" : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"}`}
+              >
+                <Grid size={18} />
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                className={`p-1.5 rounded-lg transition-all ${viewMode === "table" ? "bg-orange-50 text-primary" : "text-gray-400 hover:bg-gray-50 hover:text-gray-600"}`}
+              >
+                <List size={18} />
+              </button>
             </div>
           </div>
         </div>
@@ -560,23 +718,46 @@ const Orders = () => {
         {orders.length === 0 && !isLoading && (
           <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center shadow-sm">
             <div className="text-6xl mb-4">📦</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Belum ada pesanan hari ini</h3>
-            <p className="text-gray-500 max-w-md mx-auto">Gunakan input AI di atas atau tombol "+ Tambah Pesanan" untuk mulai menambahkan transaksi.</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              Belum ada pesanan hari ini
+            </h3>
+            <p className="text-gray-500 max-w-md mx-auto">
+              Gunakan input AI di atas atau tombol "+ Tambah Pesanan" untuk
+              mulai menambahkan transaksi.
+            </p>
           </div>
         )}
 
         {/* Content Area */}
-        {orders.length > 0 && viewMode === 'kanban' && (
+        {orders.length > 0 && viewMode === "kanban" && (
           <DragDropContext onDragEnd={onDragEnd}>
             <div className="flex flex-col md:flex-row gap-6 overflow-x-auto pb-4 hide-scrollbar">
-              {renderKanbanColumn('Pending', 'pending', pendingOrders, 'bg-orange-100', 'bg-orange-500')}
-              {renderKanbanColumn('Diproses', 'processing', processingOrders, 'bg-yellow-100', 'bg-yellow-500')}
-              {renderKanbanColumn('Selesai', 'done', doneOrders, 'bg-green-100', 'bg-green-500')}
+              {renderKanbanColumn(
+                "Pending",
+                "pending",
+                pendingOrders,
+                "bg-orange-100",
+                "bg-orange-500",
+              )}
+              {renderKanbanColumn(
+                "Diproses",
+                "processing",
+                processingOrders,
+                "bg-yellow-100",
+                "bg-yellow-500",
+              )}
+              {renderKanbanColumn(
+                "Selesai",
+                "done",
+                doneOrders,
+                "bg-green-100",
+                "bg-green-500",
+              )}
             </div>
           </DragDropContext>
         )}
 
-        {orders.length > 0 && viewMode === 'table' && (
+        {orders.length > 0 && viewMode === "table" && (
           <RecentOrdersTable orders={filteredOrders} />
         )}
 
@@ -586,41 +767,74 @@ const Orders = () => {
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden animate-slide-up flex flex-col max-h-[90vh]">
               <div className="flex justify-between items-center p-5 border-b border-gray-00 bg-gray-50/50">
                 <h3 className="font-bold text-gray-900 text-lg">
-                  {editingOrderId ? 'Edit Pesanan' : 'Tambah Pesanan Manual'}
+                  {editingOrderId ? "Edit Pesanan" : "Tambah Pesanan Manual"}
                 </h3>
-                <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:bg-gray-100 p-1.5 rounded-lg transition-colors"><X size={20} /></button>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="text-gray-400 hover:bg-gray-100 p-1.5 rounded-lg transition-colors"
+                >
+                  <X size={20} />
+                </button>
               </div>
-              
+
               <div className="p-6 overflow-y-auto flex-1">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Nama Pelanggan</label>
-                    <input 
-                      type="text" 
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Nama Pelanggan
+                    </label>
+                    <input
+                      type="text"
                       value={newOrder.customerName}
-                      onChange={(e) => setNewOrder({...newOrder, customerName: e.target.value})}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm" 
-                      placeholder="Contoh: Budi" 
+                      onChange={(e) =>
+                        setNewOrder({
+                          ...newOrder,
+                          customerName: e.target.value,
+                        })
+                      }
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm"
+                      placeholder="Contoh: Budi"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Tipe Pesanan</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Tipe Pesanan
+                    </label>
                     <div className="flex gap-2">
-                      <button 
-                        onClick={() => setNewOrder({...newOrder, orderType: 'meja', address: ''})}
-                        className={`flex-1 py-2 font-semibold rounded-xl text-sm border transition-colors ${newOrder.orderType === 'meja' ? 'bg-primary/10 text-primary border-primary' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}
+                      <button
+                        onClick={() =>
+                          setNewOrder({
+                            ...newOrder,
+                            orderType: "meja",
+                            address: "",
+                          })
+                        }
+                        className={`flex-1 py-2 font-semibold rounded-xl text-sm border transition-colors ${newOrder.orderType === "meja" ? "bg-primary/10 text-primary border-primary" : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"}`}
                       >
                         Meja
                       </button>
-                      <button 
-                        onClick={() => setNewOrder({...newOrder, orderType: 'bungkus', tableNumber: '', address: ''})}
-                        className={`flex-1 py-2 font-semibold rounded-xl text-sm border transition-colors ${newOrder.orderType === 'bungkus' ? 'bg-primary/10 text-primary border-primary' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}
+                      <button
+                        onClick={() =>
+                          setNewOrder({
+                            ...newOrder,
+                            orderType: "bungkus",
+                            tableNumber: "",
+                            address: "",
+                          })
+                        }
+                        className={`flex-1 py-2 font-semibold rounded-xl text-sm border transition-colors ${newOrder.orderType === "bungkus" ? "bg-primary/10 text-primary border-primary" : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"}`}
                       >
                         Bungkus
                       </button>
-                      <button 
-                        onClick={() => setNewOrder({...newOrder, orderType: 'delivery', tableNumber: ''})}
-                        className={`flex-1 py-2 font-semibold rounded-xl text-sm border transition-colors ${newOrder.orderType === 'delivery' ? 'bg-primary/10 text-primary border-primary' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}
+                      <button
+                        onClick={() =>
+                          setNewOrder({
+                            ...newOrder,
+                            orderType: "delivery",
+                            tableNumber: "",
+                          })
+                        }
+                        className={`flex-1 py-2 font-semibold rounded-xl text-sm border transition-colors ${newOrder.orderType === "delivery" ? "bg-primary/10 text-primary border-primary" : "bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100"}`}
                       >
                         Delivery
                       </button>
@@ -628,54 +842,69 @@ const Orders = () => {
                   </div>
                 </div>
 
-                {newOrder.orderType === 'meja' && (
+                {newOrder.orderType === "meja" && (
                   <div className="mb-4">
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Nomor Meja</label>
-                    <input 
-                      type="text" 
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Nomor Meja
+                    </label>
+                    <input
+                      type="text"
                       value={newOrder.tableNumber}
-                      onChange={(e) => setNewOrder({...newOrder, tableNumber: e.target.value})}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm" 
-                      placeholder="Contoh: 4" 
+                      onChange={(e) =>
+                        setNewOrder({
+                          ...newOrder,
+                          tableNumber: e.target.value,
+                        })
+                      }
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm"
+                      placeholder="Contoh: 4"
                     />
                   </div>
                 )}
 
-                {newOrder.orderType === 'delivery' && (
+                {newOrder.orderType === "delivery" && (
                   <div className="mb-4">
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Alamat Pengiriman</label>
-                    <textarea 
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Alamat Pengiriman
+                    </label>
+                    <textarea
                       value={newOrder.address}
-                      onChange={(e) => setNewOrder({...newOrder, address: e.target.value})}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm" 
-                      placeholder="Masukkan alamat lengkap..." 
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, address: e.target.value })
+                      }
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm"
+                      placeholder="Masukkan alamat lengkap..."
                       rows="2"
                     ></textarea>
                   </div>
                 )}
 
                 <div className="mb-4 pt-4 border-t border-gray-100">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">Pilih Item</label>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Pilih Item
+                  </label>
                   <div className="flex flex-col sm:flex-row gap-2 mb-3">
-                    <select 
+                    <select
                       value={selectedProductId}
                       onChange={(e) => setSelectedProductId(e.target.value)}
                       className="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm bg-white"
                     >
                       <option value="">-- Pilih Produk --</option>
-                      {products.map(p => (
-                        <option key={p._id} value={p._id}>{p.name} - Rp {p.sellPrice.toLocaleString('id-ID')}</option>
+                      {products.map((p) => (
+                        <option key={p._id} value={p._id}>
+                          {p.name} - Rp {p.sellPrice.toLocaleString("id-ID")}
+                        </option>
                       ))}
                     </select>
                     <div className="flex gap-2">
-                      <input 
-                        type="number" 
+                      <input
+                        type="number"
                         min="1"
                         value={selectedQty}
                         onChange={(e) => setSelectedQty(e.target.value)}
-                        className="w-20 border border-gray-200 rounded-xl px-3 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm text-center" 
+                        className="w-20 border border-gray-200 rounded-xl px-3 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm text-center"
                       />
-                      <button 
+                      <button
                         onClick={handleAddItem}
                         disabled={!selectedProductId}
                         className="flex-1 sm:flex-none bg-orange-100 text-orange-600 hover:bg-orange-200 px-4 py-2.5 rounded-xl font-bold transition-colors disabled:opacity-50"
@@ -689,22 +918,38 @@ const Orders = () => {
                   {newOrder.items.length > 0 ? (
                     <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-4 space-y-2">
                       {newOrder.items.map((item, idx) => (
-                        <div key={idx} className="flex justify-between items-center text-sm bg-white p-2.5 rounded-lg border border-gray-100 shadow-sm">
+                        <div
+                          key={idx}
+                          className="flex justify-between items-center text-sm bg-white p-2.5 rounded-lg border border-gray-100 shadow-sm"
+                        >
                           <div className="flex items-center gap-3">
-                            <span className="font-bold text-gray-900 bg-gray-100 w-6 h-6 flex items-center justify-center rounded-md">{item.qty}x</span>
-                            <span className="font-medium text-gray-700">{item.productName}</span>
+                            <span className="font-bold text-gray-900 bg-gray-100 w-6 h-6 flex items-center justify-center rounded-md">
+                              {item.qty}x
+                            </span>
+                            <span className="font-medium text-gray-700">
+                              {item.productName}
+                            </span>
                           </div>
                           <div className="flex items-center gap-4">
-                            <span className="font-semibold text-gray-900">Rp {item.subtotal.toLocaleString('id-ID')}</span>
-                            <button onClick={() => handleRemoveItem(idx)} className="text-red-400 hover:text-red-600 transition-colors">
+                            <span className="font-semibold text-gray-900">
+                              Rp {item.subtotal.toLocaleString("id-ID")}
+                            </span>
+                            <button
+                              onClick={() => handleRemoveItem(idx)}
+                              className="text-red-400 hover:text-red-600 transition-colors"
+                            >
                               <Trash2 size={16} />
                             </button>
                           </div>
                         </div>
                       ))}
                       <div className="flex justify-between items-center pt-2 px-2 mt-2 border-t border-gray-200">
-                        <span className="font-bold text-gray-700">Total Harga:</span>
-                        <span className="font-bold text-primary text-lg">Rp {manualOrderTotal.toLocaleString('id-ID')}</span>
+                        <span className="font-bold text-gray-700">
+                          Total Harga:
+                        </span>
+                        <span className="font-bold text-primary text-lg">
+                          Rp {manualOrderTotal.toLocaleString("id-ID")}
+                        </span>
                       </div>
                     </div>
                   ) : (
@@ -714,21 +959,33 @@ const Orders = () => {
                   )}
 
                   <div className="mb-2">
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Catatan Tambahan (Opsional)</label>
-                    <input 
-                      type="text" 
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">
+                      Catatan Tambahan (Opsional)
+                    </label>
+                    <input
+                      type="text"
                       value={newOrder.notes}
-                      onChange={(e) => setNewOrder({...newOrder, notes: e.target.value})}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm" 
-                      placeholder="Contoh: ekstra pedas, jangan pakai daun bawang" 
+                      onChange={(e) =>
+                        setNewOrder({ ...newOrder, notes: e.target.value })
+                      }
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm"
+                      placeholder="Contoh: ekstra pedas, jangan pakai daun bawang"
                     />
                   </div>
                 </div>
               </div>
 
               <div className="p-5 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 shrink-0">
-                <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 bg-white border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors shadow-sm">Batal</button>
-                <button onClick={handleManualSubmit} className="px-6 py-2.5 bg-primary hover:bg-orange-600 text-white font-bold rounded-xl transition-colors shadow-md shadow-primary/20 flex items-center">
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-6 py-2.5 bg-white border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleManualSubmit}
+                  className="px-6 py-2.5 bg-primary hover:bg-orange-600 text-white font-bold rounded-xl transition-colors shadow-md shadow-primary/20 flex items-center"
+                >
                   <Check size={18} className="mr-2" /> Simpan Pesanan
                 </button>
               </div>
@@ -744,17 +1001,22 @@ const Orders = () => {
                 <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Trash2 size={32} />
                 </div>
-                <h3 className="font-bold text-gray-900 text-lg mb-2">Hapus Pesanan?</h3>
-                <p className="text-gray-500 text-sm mb-6">Anda yakin ingin menghapus pesanan ini? Tindakan ini tidak dapat dibatalkan.</p>
+                <h3 className="font-bold text-gray-900 text-lg mb-2">
+                  Hapus Pesanan?
+                </h3>
+                <p className="text-gray-500 text-sm mb-6">
+                  Anda yakin ingin menghapus pesanan ini? Tindakan ini tidak
+                  dapat dibatalkan.
+                </p>
                 <div className="flex gap-3">
-                  <button 
-                    onClick={() => setDeleteOrderId(null)} 
+                  <button
+                    onClick={() => setDeleteOrderId(null)}
                     className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition-colors"
                   >
                     Batal
                   </button>
-                  <button 
-                    onClick={executeDeleteOrder} 
+                  <button
+                    onClick={executeDeleteOrder}
                     className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl shadow-md shadow-red-500/20 transition-colors"
                   >
                     Ya, Hapus
@@ -772,31 +1034,46 @@ const Orders = () => {
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
                 <AlertTriangle size={32} />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Stok Tidak Cukup!</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Stok Tidak Cukup!
+              </h3>
               <p className="text-gray-600 text-sm mb-4">
-                Stok <span className="font-bold">{stockErrorModal.errorData?.product}</span> tidak mencukupi untuk pesanan ini.
+                Stok{" "}
+                <span className="font-bold">
+                  {stockErrorModal.errorData?.product}
+                </span>{" "}
+                tidak mencukupi untuk pesanan ini.
               </p>
               <div className="bg-gray-50 rounded-xl p-3 flex justify-around mb-6 border border-gray-100">
                 <div>
                   <p className="text-xs text-gray-500">Tersedia</p>
-                  <p className="font-bold text-lg text-gray-900">{stockErrorModal.errorData?.available}</p>
+                  <p className="font-bold text-lg text-gray-900">
+                    {stockErrorModal.errorData?.available}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Dibutuhkan</p>
-                  <p className="font-bold text-lg text-red-500">{stockErrorModal.errorData?.requested}</p>
+                  <p className="font-bold text-lg text-red-500">
+                    {stockErrorModal.errorData?.requested}
+                  </p>
                 </div>
               </div>
-              <p className="text-xs text-gray-500 italic mb-6">Apakah Anda ingin tetap melanjutkan proses pesanan ini meskipun stok tercatat kurang?</p>
-              
+              <p className="text-xs text-gray-500 italic mb-6">
+                Apakah Anda ingin tetap melanjutkan proses pesanan ini meskipun
+                stok tercatat kurang?
+              </p>
+
               <div className="flex gap-3">
-                <button 
-                  onClick={() => setStockErrorModal({ ...stockErrorModal, isOpen: false })} 
+                <button
+                  onClick={() =>
+                    setStockErrorModal({ ...stockErrorModal, isOpen: false })
+                  }
                   className="flex-1 py-2.5 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors"
                 >
                   Batal
                 </button>
-                <button 
-                  onClick={forceUpdateStatus} 
+                <button
+                  onClick={forceUpdateStatus}
                   className="flex-1 py-2.5 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 shadow-md shadow-red-500/20 transition-colors"
                 >
                   Lanjutkan Anyway
@@ -814,33 +1091,51 @@ const Orders = () => {
             <div className="p-6">
               <div className="flex items-center text-red-500 mb-4">
                 <AlertTriangle size={24} className="mr-3" />
-                <h3 className="text-lg font-bold text-gray-900">Menu tidak tersedia!</h3>
+                <h3 className="text-lg font-bold text-gray-900">
+                  Menu tidak tersedia!
+                </h3>
               </div>
               <p className="text-gray-600 text-sm mb-3">
                 Menu berikut tidak dapat ditemukan di inventori saat ini:
               </p>
               <ul className="list-disc pl-5 mb-5 text-red-600 font-semibold text-sm">
-                {aiParsedResult.notFound.map((item, i) => <li key={i}>{item}</li>)}
+                {aiParsedResult.notFound.map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
               </ul>
-              
+
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 max-h-48 overflow-y-auto mb-6">
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Daftar Menu Tersedia</p>
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
+                  Daftar Menu Tersedia
+                </p>
                 <div className="space-y-2">
-                  {products.filter(p => p.stock > 0).map(p => (
-                    <div key={p._id} className="flex justify-between items-center text-sm border-b border-gray-200 pb-1 last:border-0">
-                      <span className="font-medium text-gray-800">{p.name}</span>
-                      <span className="text-gray-500 text-xs">Rp {p.sellPrice?.toLocaleString('id-ID')} ({p.stock} {p.unit})</span>
-                    </div>
-                  ))}
-                  {products.filter(p => p.stock > 0).length === 0 && (
-                    <p className="text-sm text-gray-400">Tidak ada produk tersedia (stok habis).</p>
+                  {products
+                    .filter((p) => p.stock > 0)
+                    .map((p) => (
+                      <div
+                        key={p._id}
+                        className="flex justify-between items-center text-sm border-b border-gray-200 pb-1 last:border-0"
+                      >
+                        <span className="font-medium text-gray-800">
+                          {p.name}
+                        </span>
+                        <span className="text-gray-500 text-xs">
+                          Rp {p.sellPrice?.toLocaleString("id-ID")} ({p.stock}{" "}
+                          {p.unit})
+                        </span>
+                      </div>
+                    ))}
+                  {products.filter((p) => p.stock > 0).length === 0 && (
+                    <p className="text-sm text-gray-400">
+                      Tidak ada produk tersedia (stok habis).
+                    </p>
                   )}
                 </div>
               </div>
 
               <div className="flex justify-end gap-3">
-                <button 
-                  onClick={() => setAiParsedResult(null)} 
+                <button
+                  onClick={() => setAiParsedResult(null)}
                   className="px-6 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors w-full"
                 >
                   Tutup & Edit Pesanan
@@ -859,18 +1154,27 @@ const Orders = () => {
               <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Check size={32} />
               </div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Selesaikan Pesanan?</h3>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Selesaikan Pesanan?
+              </h3>
               <p className="text-gray-500 mb-6">
-                Apakah Anda yakin pesanan ini sudah selesai? Pesanan yang sudah berstatus Selesai <span className="font-bold text-red-500">tidak dapat dikembalikan</span> ke status sebelumnya.
+                Apakah Anda yakin pesanan ini sudah selesai? Pesanan yang sudah
+                berstatus Selesai{" "}
+                <span className="font-bold text-red-500">
+                  tidak dapat dikembalikan
+                </span>{" "}
+                ke status sebelumnya.
               </p>
               <div className="flex gap-3">
-                <button 
-                  onClick={() => setConfirmDoneModal({ isOpen: false, orderId: null })}
+                <button
+                  onClick={() =>
+                    setConfirmDoneModal({ isOpen: false, orderId: null })
+                  }
                   className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-gray-200 transition-colors"
                 >
                   Batal
                 </button>
-                <button 
+                <button
                   onClick={executeConfirmDone}
                   className="flex-1 py-2.5 bg-green-500 text-white font-bold rounded-xl hover:bg-green-600 transition-colors shadow-lg shadow-green-500/30"
                 >
@@ -881,7 +1185,6 @@ const Orders = () => {
           </div>
         </div>
       )}
-
     </DashboardLayout>
   );
 };
