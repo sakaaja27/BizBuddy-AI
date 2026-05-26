@@ -384,20 +384,21 @@ const Inventory = () => {
 
       {/* PRODUCT MODAL */}
       {isProductModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-slide-up">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-              <h2 className="text-lg font-bold text-gray-900">{editingProduct ? 'Edit Produk' : 'Tambah Produk Baru'}</h2>
-              <button onClick={() => setIsProductModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
-                <X size={20} />
-              </button>
-            </div>
-            <form onSubmit={handleProductSubmit}>
-              <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Produk *</label>
-                  <input required value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm" placeholder="Contoh: Nasi Goreng Spesial" />
-                </div>
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-900/40 backdrop-blur-sm">
+          <div className="flex min-h-full items-center justify-center p-4 py-10">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg animate-slide-up">
+              <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <h2 className="text-lg font-bold text-gray-900">{editingProduct ? 'Edit Produk' : 'Tambah Produk Baru'}</h2>
+                <button type="button" onClick={() => setIsProductModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                  <X size={20} />
+                </button>
+              </div>
+              <form onSubmit={handleProductSubmit}>
+                <div className="p-6 space-y-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Produk *</label>
+                    <input required value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})} className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-sm" placeholder="Contoh: Nasi Goreng Spesial" />
+                  </div>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -465,12 +466,14 @@ const Inventory = () => {
             </form>
           </div>
         </div>
+      </div>
       )}
 
       {/* QUICK RESTOCK MODAL */}
       {isRestockModalOpen && editingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden animate-slide-up">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-900/40 backdrop-blur-sm">
+          <div className="flex min-h-full items-center justify-center p-4 py-10">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm animate-slide-up">
             <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
               <h2 className="text-lg font-bold text-gray-900">Quick Restock</h2>
               <button onClick={() => setIsRestockModalOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
@@ -501,6 +504,7 @@ const Inventory = () => {
             </form>
           </div>
         </div>
+      </div>
       )}
 
     </DashboardLayout>

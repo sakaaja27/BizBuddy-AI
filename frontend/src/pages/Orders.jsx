@@ -334,6 +334,7 @@ const Orders = () => {
                     ref={provided.innerRef}
                     {...provided.draggableProps}
                     {...provided.dragHandleProps}
+                    style={provided.draggableProps.style}
                     className={`bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-3 group relative
                       ${snapshot.isDragging ? 'rotate-3 shadow-xl opacity-90 scale-[1.02] cursor-grabbing border-primary' : 'hover:shadow-md hover:scale-[1.01] transition-all cursor-grab'}`}
                   >
@@ -588,16 +589,17 @@ const Orders = () => {
 
         {/* Manual Add/Edit Order Modal */}
         {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden animate-slide-up flex flex-col max-h-[90vh]">
-              <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-gray-50/50">
-                <h3 className="font-bold text-gray-900 text-lg">
-                  {editingOrderId ? 'Edit Pesanan' : 'Tambah Pesanan Manual'}
-                </h3>
-                <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:bg-gray-100 p-1.5 rounded-lg transition-colors"><X size={20} /></button>
-              </div>
-              
-              <div className="p-6 overflow-y-auto flex-1 space-y-4">
+          <div className="fixed inset-0 z-50 overflow-y-auto bg-gray-900/40 backdrop-blur-sm animate-fade-in">
+            <div className="flex min-h-full items-center justify-center p-4 py-10">
+              <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl animate-slide-up">
+                <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-gray-50/50">
+                  <h3 className="font-bold text-gray-900 text-lg">
+                    {editingOrderId ? 'Edit Pesanan' : 'Tambah Pesanan Manual'}
+                  </h3>
+                  <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:bg-gray-100 p-1.5 rounded-lg transition-colors"><X size={20} /></button>
+                </div>
+                
+                <div className="p-6 space-y-4">
                 {/* Row 1: Nama + Tipe */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
@@ -800,6 +802,7 @@ const Orders = () => {
                 <button onClick={handleManualSubmit} className="px-6 py-2.5 bg-primary hover:bg-orange-600 text-white font-bold rounded-xl transition-colors shadow-md shadow-primary/20 flex items-center">
                   <Check size={18} className="mr-2" /> Simpan Pesanan
                 </button>
+                </div>
               </div>
             </div>
           </div>

@@ -41,26 +41,27 @@ const getOrders = async (req, res) => {
 const createOrder = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { customerName, orderType, tableNumber, address, items, notes } = req.body;
+    const { 
+      customerName, orderType, tableNumber, address, items, notes,
+      deliveryAddress, shippingAddress, courierService, trackingNumber,
+      platformOrderId, platform, appointmentDate, appointmentTime,
+      technicianName, customDetails, dueDate, downPayment, paymentMethod,
+      size, color, customerPhone
+    } = req.body;
 
-    // We need businessId
     const business = await Business.findOne({ userId });
     if (!business) {
       return res.status(400).json({ message: 'Profil bisnis tidak ditemukan' });
     }
 
-    // Calculate totalAmount if not provided or to ensure safety
     let totalAmount = 0;
     const processedItems = items.map(item => {
       const subtotal = item.qty * item.price;
       totalAmount += subtotal;
-      return {
-        ...item,
-        subtotal
-      };
+      return { ...item, subtotal };
     });
 
-    const order = await Order.create({
+    const orderData = {
       userId,
       businessId: business._id,
       customerName,
@@ -70,13 +71,22 @@ const createOrder = async (req, res) => {
       items: processedItems,
       totalAmount,
       status: 'pending',
-      notes
-    });
+      notes,
+      deliveryAddress, shippingAddress, courierService, trackingNumber,
+      platformOrderId, platform, appointmentTime,
+      technicianName, customDetails, downPayment, paymentMethod,
+      size, color, customerPhone
+    };
+
+    if (appointmentDate) orderData.appointmentDate = appointmentDate;
+    if (dueDate) orderData.dueDate = dueDate;
+
+    const order = await Order.create(orderData);
 
     res.status(201).json(order);
   } catch (error) {
     console.error('Error creating order:', error);
-    res.status(500).json({ message: 'Gagal membuat pesanan' });
+    res.status(500).json({ message: 'Gagal membuat pesanan', error: error.message });
   }
 };
 
@@ -205,22 +215,35 @@ const updateOrderStatus = async (req, res) => {
 // @access  Private
 const updateOrder = async (req, res) => {
   try {
-    const { customerName, orderType, tableNumber, address, items, notes } = req.body;
+    const { 
+      customerName, orderType, tableNumber, address, items, notes,
+      deliveryAddress, shippingAddress, courierService, trackingNumber,
+      platformOrderId, platform, appointmentDate, appointmentTime,
+      technicianName, customDetails, dueDate, downPayment, paymentMethod,
+      size, color, customerPhone
+    } = req.body;
     
-    // Calculate totalAmount if not provided or to ensure safety
     let totalAmount = 0;
     const processedItems = items.map(item => {
       const subtotal = item.qty * item.price;
       totalAmount += subtotal;
-      return {
-        ...item,
-        subtotal
-      };
+      return { ...item, subtotal };
     });
+
+    const updateData = { 
+      customerName, orderType, tableNumber, address, items: processedItems, totalAmount, notes,
+      deliveryAddress, shippingAddress, courierService, trackingNumber,
+      platformOrderId, platform, appointmentTime,
+      technicianName, customDetails, downPayment, paymentMethod,
+      size, color, customerPhone
+    };
+
+    if (appointmentDate) updateData.appointmentDate = appointmentDate;
+    if (dueDate) updateData.dueDate = dueDate;
 
     const order = await Order.findOneAndUpdate(
       { _id: req.params.id, userId: req.user.id },
-      { customerName, orderType, tableNumber, address, items: processedItems, totalAmount, notes },
+      updateData,
       { new: true }
     );
 
