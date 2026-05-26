@@ -1216,7 +1216,7 @@ const Orders = () => {
                           setNewOrder({ ...newOrder, notes: e.target.value })
                         }
                         className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm"
-                        placeholder="Contoh: ekstra pedas, jangan pakai daun bawang"
+                        
                       />
                     </div>
                   </div>

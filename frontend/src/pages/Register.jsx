@@ -231,7 +231,7 @@ const Register = () => {
             <div className="h-px bg-gray-200 w-full"></div>
           </div>
 
-          <div className="flex justify-center mt-6">
+          {/* <div className="flex justify-center mt-6">
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
               onError={() => setError('Google Login dibatalkan atau gagal')}
@@ -241,7 +241,7 @@ const Register = () => {
               logo_alignment="center"
               text="signup_with"
             />
-          </div>
+          </div> */}
 
           <p className="mt-8 text-center text-sm text-gray-500">
             Sudah punya akun? <Link to="/login" className="text-secondary font-medium hover:underline">Masuk</Link>

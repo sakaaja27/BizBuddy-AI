@@ -113,7 +113,7 @@ const Onboarding = () => {
     if (!skipProduct && !validateStep3()) return;
     setLoading(true);
     try {
-      await axios.post('/onboarding/step3', {
+      const res = await axios.post('/onboarding/step3', {
         product: skipProduct ? null : {
           ...productInfo,
           price: parseInt(productInfo.price.replace(/\D/g, '') || '0', 10),
@@ -123,7 +123,16 @@ const Onboarding = () => {
         }
       });
       
-      updateUser({ isOnboardingComplete: true });
+      const business = res.data.business;
+      updateUser({ 
+        isOnboardingComplete: true,
+        businessName: business?.businessName,
+        businessType: business?.businessType,
+        city: business?.city,
+        description: business?.description,
+        address: business?.address
+      });
+      
       triggerConfetti();
       toast.success('Selamat datang di BizBuddy AI! Toko kamu sudah siap 🎉', { duration: 5000 });
       setTimeout(() => navigate('/dashboard'), 2000);
@@ -236,7 +245,7 @@ const Onboarding = () => {
                   <button
                     key={type.id}
                     onClick={() => setBusinessType(type.id)}
-                    className={`p-5 rounded-2xl border-2 text-left transition-all relative ${
+                    className={`p-5 rounded-2xl border text-left transition-all relative ${
                       businessType === type.id 
                         ? 'border-primary bg-orange-50 shadow-md scale-[1.02]' 
                         : 'border-gray-100 bg-white shadow-sm hover:border-orange-300 hover:shadow-md hover:scale-[1.02]'
@@ -284,7 +293,7 @@ const Onboarding = () => {
                       if(errors.businessName) setErrors({...errors, businessName: null});
                     }}
                     onBlur={() => !businessInfo.businessName.trim() && setErrors({...errors, businessName: 'Nama bisnis wajib diisi'})}
-                    className={`w-full px-4 py-3.5 border-2 rounded-xl outline-none font-medium transition-colors ${errors.businessName ? 'border-red-500 bg-red-50/30' : 'border-gray-200 focus:border-primary bg-gray-50'}`}
+                    className={`w-full px-4 py-3.5 border rounded-xl outline-none font-medium transition-colors ${errors.businessName ? 'border-red-500 bg-red-50/30' : 'border-gray-200 focus:border-primary bg-gray-50'}`}
                     placeholder={getPlaceholder('name')}
                   />
                   {errors.businessName && <p className="text-red-500 text-xs font-bold mt-1.5">{errors.businessName}</p>}
@@ -300,7 +309,7 @@ const Onboarding = () => {
                       if(errors.city) setErrors({...errors, city: null});
                     }}
                     onBlur={() => !businessInfo.city.trim() && setErrors({...errors, city: 'Kota wajib diisi'})}
-                    className={`w-full px-4 py-3.5 border-2 rounded-xl outline-none font-medium transition-colors ${errors.city ? 'border-red-500 bg-red-50/30' : 'border-gray-200 focus:border-primary bg-gray-50'}`}
+                    className={`w-full px-4 py-3.5 border rounded-xl outline-none font-medium transition-colors ${errors.city ? 'border-red-500 bg-red-50/30' : 'border-gray-200 focus:border-primary bg-gray-50'}`}
                     placeholder="contoh: Surabaya"
                   />
                   {errors.city && <p className="text-red-500 text-xs font-bold mt-1.5">{errors.city}</p>}
@@ -313,7 +322,7 @@ const Onboarding = () => {
                       <button
                         key={opt}
                         onClick={() => { setBusinessInfo({...businessInfo, yearsRunning: opt}); if(errors.yearsRunning) setErrors({...errors, yearsRunning: null}); }}
-                        className={`flex-1 py-3 rounded-xl border-2 font-bold text-sm transition-all ${
+                        className={`flex-1 py-3 rounded-xl border font-bold text-sm transition-all ${
                           businessInfo.yearsRunning === opt ? 'bg-primary border-primary text-white shadow-md' : 'bg-white border-gray-200 text-gray-600 hover:border-orange-300'
                         }`}
                       >
@@ -331,7 +340,7 @@ const Onboarding = () => {
                       <button
                         key={opt}
                         onClick={() => { setBusinessInfo({...businessInfo, productCount: opt}); if(errors.productCount) setErrors({...errors, productCount: null}); }}
-                        className={`flex-1 py-3 rounded-xl border-2 font-bold text-sm transition-all ${
+                        className={`flex-1 py-3 rounded-xl border font-bold text-sm transition-all ${
                           businessInfo.productCount === opt ? 'bg-primary border-primary text-white shadow-md' : 'bg-white border-gray-200 text-gray-600 hover:border-orange-300'
                         }`}
                       >
@@ -349,7 +358,7 @@ const Onboarding = () => {
                       <button
                         key={opt}
                         onClick={() => togglePlatform(opt)}
-                        className={`px-4 py-2.5 rounded-xl border-2 font-bold text-sm transition-all ${
+                        className={`px-4 py-2.5 rounded-xl border font-bold text-sm transition-all ${
                           businessInfo.platforms.includes(opt) ? 'bg-primary border-primary text-white shadow-md' : 'bg-white border-gray-200 text-gray-600 hover:border-orange-300'
                         }`}
                       >
@@ -364,7 +373,7 @@ const Onboarding = () => {
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep(1)}
-                  className="w-1/3 bg-transparent border-2 border-gray-200 hover:bg-gray-50 text-gray-600 font-bold py-4 rounded-full transition-all"
+                  className="w-1/3 bg-transparent border border-gray-200 hover:bg-gray-50 text-gray-600 font-bold py-4 rounded-full transition-all"
                 >
                   ← Kembali
                 </button>
@@ -382,131 +391,353 @@ const Onboarding = () => {
           {/* STEP 3 */}
           {step === 3 && (
             <div className="animate-fade-in">
-              <div className="text-center mb-10">
-                <div className="text-6xl mb-4">🎉</div>
-                <h1 className="text-2xl md:text-3xl font-black text-gray-900 mb-3">Hampir selesai! Tambah produk pertama</h1>
-                <p className="text-gray-500 font-medium">Opsional — kamu bisa menambahkan produk kapan saja nanti</p>
+              
+              {/* HEADER */}
+              <div className="text-center mb-12">
+                <div className="text-6xl mb-5">🎉</div>
+
+                <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-gray-900 mb-3">
+                  Hampir selesai! Tambah produk pertama
+                </h1>
+
+                <p className="text-gray-500 font-medium text-base">
+                  Opsional — kamu bisa menambahkan produk kapan saja nanti
+                </p>
               </div>
 
-              <div className="flex flex-col md:flex-row gap-6 mb-10">
-                <div className="flex-1 bg-white p-6 rounded-3xl border border-gray-100 shadow-xl shadow-gray-200/40 space-y-5">
+              {/* CONTENT */}
+              <div className="grid grid-cols-1 xl:grid-cols-[1.15fr_0.85fr] gap-8 items-start mb-12">
+
+                {/* FORM */}
+                <div className="bg-white p-7 rounded-[32px] border border-gray-100 shadow-sm space-y-6">
+
+                  {/* NAMA */}
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Nama Produk <span className="text-red-500">*</span></label>
-                    <input 
-                      type="text" 
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Nama Produk <span className="text-red-500">*</span>
+                    </label>
+
+                    <input
+                      type="text"
                       value={productInfo.name}
-                      onChange={(e) => { setProductInfo({...productInfo, name: e.target.value}); if(errors.name) setErrors({...errors, name: null}); }}
-                      className={`w-full px-4 py-3 border-2 rounded-xl outline-none font-medium transition-colors ${errors.name ? 'border-red-500' : 'border-gray-200 focus:border-primary'}`}
-                      placeholder={getPlaceholder('productName')}
+                      onChange={(e) => {
+                        setProductInfo({
+                          ...productInfo,
+                          name: e.target.value,
+                        });
+
+                        if (errors.name)
+                          setErrors({
+                            ...errors,
+                            name: null,
+                          });
+                      }}
+                      className={`
+                        w-full px-5 py-3.5 border rounded-2xl outline-none font-medium
+                        transition-all duration-200 bg-white
+                        ${errors.name
+                          ? "border-red-500"
+                          : "border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10"
+                        }
+                      `}
+                      placeholder={getPlaceholder("productName")}
                     />
-                    {errors.name && <p className="text-red-500 text-xs font-bold mt-1">{errors.name}</p>}
+
+                    {errors.name && (
+                      <p className="text-red-500 text-xs font-semibold mt-2">
+                        {errors.name}
+                      </p>
+                    )}
                   </div>
 
+                  {/* KATEGORI */}
                   <div>
-                    <label className="block text-sm font-bold text-gray-700 mb-2">Kategori</label>
-                    <select 
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Kategori
+                    </label>
+
+                    <select
                       value={productInfo.category}
-                      onChange={(e) => setProductInfo({...productInfo, category: e.target.value})}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none font-medium focus:border-primary bg-white appearance-none"
+                      onChange={(e) =>
+                        setProductInfo({
+                          ...productInfo,
+                          category: e.target.value,
+                        })
+                      }
+                      className="
+                        w-full px-5 py-3.5 border border-gray-200 rounded-2xl
+                        outline-none font-medium bg-white appearance-none
+                        transition-all duration-200
+                        focus:border-primary focus:ring-4 focus:ring-primary/10
+                      "
                     >
                       <option value="">Pilih Kategori...</option>
-                      {getCategories().map(c => <option key={c} value={c}>{c}</option>)}
+
+                      {getCategories().map((c) => (
+                        <option key={c} value={c}>
+                          {c}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* HARGA */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                    {/* HARGA JUAL */}
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Harga Jual <span className="text-red-500">*</span></label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Harga Jual <span className="text-red-500">*</span>
+                      </label>
+
                       <div className="relative">
-                        <span className="absolute left-4 top-3.5 text-gray-500 font-bold">Rp</span>
-                        <input 
-                          type="text" 
+                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">
+                          Rp
+                        </span>
+
+                        <input
+                          type="text"
                           value={productInfo.price}
-                          onChange={(e) => { setProductInfo({...productInfo, price: formatRupiah(e.target.value)}); if(errors.price) setErrors({...errors, price: null}); }}
-                          className={`w-full pl-11 pr-4 py-3 border-2 rounded-xl outline-none font-bold transition-colors ${errors.price ? 'border-red-500' : 'border-gray-200 focus:border-primary'}`}
+                          onChange={(e) => {
+                            setProductInfo({
+                              ...productInfo,
+                              price: formatRupiah(e.target.value),
+                            });
+
+                            if (errors.price)
+                              setErrors({
+                                ...errors,
+                                price: null,
+                              });
+                          }}
+                          className={`
+                            w-full pl-12 pr-5 py-3.5 border rounded-2xl outline-none
+                            font-semibold transition-all duration-200 bg-white
+                            ${errors.price
+                              ? "border-red-500"
+                              : "border-gray-200 focus:border-primary focus:ring-4 focus:ring-primary/10"
+                            }
+                          `}
                           placeholder="25.000"
                         />
                       </div>
-                      {errors.price && <p className="text-red-500 text-xs font-bold mt-1">{errors.price}</p>}
+
+                      {errors.price && (
+                        <p className="text-red-500 text-xs font-semibold mt-2">
+                          {errors.price}
+                        </p>
+                      )}
                     </div>
+
+                    {/* MODAL */}
                     <div>
-                      <label className="block text-sm font-bold text-gray-700 mb-2">Harga Modal <span className="text-xs text-gray-400 font-normal">(Opsional)</span></label>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Harga Modal{" "}
+                       
+                      </label>
+
                       <div className="relative">
-                        <span className="absolute left-4 top-3.5 text-gray-500 font-bold">Rp</span>
-                        <input 
-                          type="text" 
+                        <span className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-400 font-semibold">
+                          Rp
+                        </span>
+
+                        <input
+                          type="text"
                           value={productInfo.buyPrice}
-                          onChange={(e) => setProductInfo({...productInfo, buyPrice: formatRupiah(e.target.value)})}
-                          className="w-full pl-11 pr-4 py-3 border-2 border-gray-200 rounded-xl outline-none font-bold focus:border-primary"
+                          onChange={(e) =>
+                            setProductInfo({
+                              ...productInfo,
+                              buyPrice: formatRupiah(e.target.value),
+                            })
+                          }
+                          className="
+                            w-full pl-12 pr-5 py-3.5 border border-gray-200 rounded-2xl
+                            outline-none font-semibold bg-white
+                            transition-all duration-200
+                            focus:border-primary focus:ring-4 focus:ring-primary/10
+                          "
                           placeholder="15.000"
                         />
                       </div>
                     </div>
                   </div>
 
-                  {businessType !== 'jasa' && (
-                    <div className="grid grid-cols-2 gap-4">
+                  {/* STOCK */}
+                  {businessType !== "jasa" && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                      {/* STOK */}
                       <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Stok Awal</label>
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Stok Awal
+                        </label>
+
                         <div className="flex">
-                          <input 
-                            type="number" 
+                          <input
+                            type="number"
                             value={productInfo.stock}
-                            onChange={(e) => setProductInfo({...productInfo, stock: e.target.value})}
-                            className="w-2/3 px-4 py-3 border-2 border-r-0 border-gray-200 rounded-l-xl outline-none font-bold focus:border-primary"
+                            onChange={(e) =>
+                              setProductInfo({
+                                ...productInfo,
+                                stock: e.target.value,
+                              })
+                            }
+                            className="
+                              w-2/3 px-5 py-3.5 border border-r-0 border-gray-200
+                              rounded-l-2xl outline-none font-semibold
+                              focus:border-primary bg-white
+                            "
                             placeholder="0"
                           />
-                          <select 
+
+                          <select
                             value={productInfo.unit}
-                            onChange={(e) => setProductInfo({...productInfo, unit: e.target.value})}
-                            className="w-1/3 px-2 py-3 border-2 border-gray-200 rounded-r-xl outline-none font-bold focus:border-primary bg-gray-50 text-sm"
+                            onChange={(e) =>
+                              setProductInfo({
+                                ...productInfo,
+                                unit: e.target.value,
+                              })
+                            }
+                            className="
+                              w-1/3 px-3 py-3.5 border border-gray-200 rounded-r-2xl
+                              outline-none font-semibold bg-gray-50 text-sm
+                              focus:border-primary
+                            "
                           >
-                            {getUnits().map(u => <option key={u} value={u}>{u}</option>)}
+                            {getUnits().map((u) => (
+                              <option key={u} value={u}>
+                                {u}
+                              </option>
+                            ))}
                           </select>
                         </div>
                       </div>
+
+                      {/* MIN STOCK */}
                       <div>
-                        <label className="block text-sm font-bold text-gray-700 mb-2">Stok Minimum Alert</label>
-                        <input 
-                          type="number" 
+                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                          Stok Minimum Alert
+                        </label>
+
+                        <input
+                          type="number"
                           value={productInfo.minStock}
-                          onChange={(e) => setProductInfo({...productInfo, minStock: e.target.value})}
-                          className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl outline-none font-bold focus:border-primary"
+                          onChange={(e) =>
+                            setProductInfo({
+                              ...productInfo,
+                              minStock: e.target.value,
+                            })
+                          }
+                          className="
+                            w-full px-5 py-3.5 border border-gray-200 rounded-2xl
+                            outline-none font-semibold bg-white
+                            transition-all duration-200
+                            focus:border-primary focus:ring-4 focus:ring-primary/10
+                          "
                           placeholder="5"
                         />
-                        <p className="text-[10px] text-gray-500 mt-1 leading-tight"><Info size={10} className="inline mr-1"/>AI akan ingatkan jika stok dibawah angka ini</p>
+
+                        <p className="text-xs text-gray-500 mt-2 flex items-start gap-1.5 leading-relaxed">
+                          <Info size={14} className="mt-[1px] shrink-0" />
+                          AI akan mengingatkan jika stok dibawah angka minimum ini
+                        </p>
                       </div>
                     </div>
                   )}
                 </div>
 
-                {/* Live Preview Card */}
-                <div className="w-full md:w-64 shrink-0">
-                  <p className="text-xs font-bold text-gray-400 mb-3 uppercase tracking-wider text-center md:text-left">Preview Produk</p>
-                  <div className="bg-white rounded-3xl p-5 border-2 border-dashed border-gray-200 shadow-sm relative overflow-hidden group">
-                    <div className="w-full aspect-square bg-gray-50 rounded-2xl mb-4 flex items-center justify-center text-4xl border border-gray-100">
-                      {businessTypes.find(t => t.id === businessType)?.emoji || '📦'}
+                {/* PREVIEW */}
+                <div className="w-full max-w-md mx-auto xl:max-w-none">
+
+                  <p className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em] mb-4 text-center xl:text-left">
+                    Preview Produk
+                  </p>
+
+                  <div
+                    className="
+                      bg-gradient-to-b from-white to-gray-50/80
+                      rounded-[32px]
+                      p-6
+                      border border-gray-100
+                      shadow-xl shadow-gray-200/40
+                      transition-all duration-300
+                      hover:-translate-y-1
+                    "
+                  >
+
+                    {/* IMAGE */}
+                    <div
+                      className="
+                        w-full aspect-square
+                        rounded-[28px]
+                        bg-gradient-to-br from-gray-50 to-gray-100
+                        border border-gray-100
+                        shadow-inner
+                        flex items-center justify-center
+                        text-7xl
+                        mb-6
+                      "
+                    >
+                      {businessTypes.find((t) => t.id === businessType)?.emoji || "📦"}
                     </div>
+
+                    {/* CATEGORY */}
                     {productInfo.category && (
-                      <span className="inline-block px-2 py-1 bg-gray-100 text-gray-600 rounded-md text-[10px] font-bold uppercase mb-2">
+                      <span
+                        className="
+                          inline-flex items-center
+                          px-3 py-1
+                          rounded-full
+                          bg-orange-50
+                          text-primary
+                          text-[11px]
+                          font-bold
+                          uppercase
+                          tracking-wide
+                          mb-3
+                        "
+                      >
                         {productInfo.category}
                       </span>
                     )}
-                    <h3 className={`font-bold text-lg mb-1 leading-tight ${productInfo.name ? 'text-gray-900' : 'text-gray-300'}`}>
-                      {productInfo.name || 'Nama Produk'}
+
+                    {/* TITLE */}
+                    <h3
+                      className={`
+                        text-2xl font-extrabold tracking-tight mb-2 leading-tight
+                        ${productInfo.name ? "text-gray-900" : "text-gray-300"}
+                      `}
+                    >
+                      {productInfo.name || "Nama Produk"}
                     </h3>
-                    <p className={`font-black text-xl mb-4 ${productInfo.price ? 'text-primary' : 'text-gray-300'}`}>
-                      Rp {productInfo.price || '0'}
+
+                    {/* PRICE */}
+                    <p
+                      className={`
+                        text-3xl font-black mb-6
+                        ${productInfo.price ? "text-primary" : "text-gray-300"}
+                      `}
+                    >
+                      Rp {productInfo.price || "0"}
                     </p>
-                    
-                    {businessType !== 'jasa' && (
+
+                    {/* STOCK */}
+                    {businessType !== "jasa" && (
                       <div>
-                        <div className="flex justify-between items-center mb-1.5">
-                          <span className="text-xs font-semibold text-gray-500">Stok: {productInfo.stock || '0'} {productInfo.unit}</span>
-                          <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">Aman</span>
+
+                        <div className="flex justify-between items-center mb-2">
+
+                          <span className="text-sm font-semibold text-gray-500">
+                            Stok: {productInfo.stock || "0"} {productInfo.unit}
+                          </span>
+
+                          <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold">
+                            Aman
+                          </span>
                         </div>
-                        <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                          <div className="bg-green-500 w-full h-full"></div>
+
+                        <div className="w-full h-2 rounded-full bg-gray-100 overflow-hidden">
+                          <div className="h-full w-full bg-green-500 rounded-full"></div>
                         </div>
                       </div>
                     )}
@@ -514,18 +745,46 @@ const Onboarding = () => {
                 </div>
               </div>
 
+              {/* BUTTONS */}
               <div className="flex flex-col gap-3">
+
                 <button
                   onClick={() => finishOnboarding(false)}
                   disabled={loading}
-                  className="w-full bg-gradient-to-r from-primary to-orange-500 hover:from-orange-600 hover:to-orange-600 text-white font-black py-4 rounded-full transition-all shadow-xl shadow-primary/30 flex justify-center items-center text-lg"
+                  className="
+                    w-full
+                    bg-gradient-to-r from-primary to-orange-500
+                    hover:from-orange-600 hover:to-orange-600
+                    text-white
+                    font-extrabold
+                    py-3.5
+                    rounded-2xl
+                    transition-all duration-200
+                    shadow-xl shadow-primary/30
+                    flex justify-center items-center
+                    text-lg
+                  "
                 >
-                  {loading ? <Loader2 className="animate-spin" size={24} /> : 'Selesai & Mulai BizBuddy! 🚀'}
+                  {loading ? (
+                    <Loader2 className="animate-spin" size={24} />
+                  ) : (
+                    "Selesai & Mulai BizBuddy! 🚀"
+                  )}
                 </button>
+
                 <button
                   onClick={() => finishOnboarding(true)}
                   disabled={loading}
-                  className="w-full bg-transparent text-gray-400 font-bold py-3 rounded-full hover:text-gray-600 transition-colors"
+                  className="
+                    w-full
+                    bg-transparent
+                    text-gray-400
+                    font-bold
+                    py-3
+                    rounded-2xl
+                    hover:text-gray-600
+                    transition-colors
+                  "
                 >
                   Lewati, isi nanti
                 </button>

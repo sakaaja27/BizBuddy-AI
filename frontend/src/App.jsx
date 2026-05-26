@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Onboarding from './pages/Onboarding';
@@ -71,16 +72,17 @@ const App = () => {
   }, []);
 
   return (
-    <BrowserRouter>
-      <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
-      <UpgradeModal
-        isOpen={upgradeModal.isOpen}
-        feature={upgradeModal.feature}
-        limit={upgradeModal.limit}
-        onClose={() => setUpgradeModal({ isOpen: false, feature: null, limit: null })}
-      />
-      <TrialExpiredOverlay isOpen={trialExpired} onClose={() => setTrialExpired(false)} />
-      <Routes>
+    <GoogleOAuthProvider clientId="92963289843-33qgg4dats40jl6mbvlfru5oi1usec6b.apps.googleusercontent.com">
+      <BrowserRouter>
+        <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+        <UpgradeModal
+          isOpen={upgradeModal.isOpen}
+          feature={upgradeModal.feature}
+          limit={upgradeModal.limit}
+          onClose={() => setUpgradeModal({ isOpen: false, feature: null, limit: null })}
+        />
+        <TrialExpiredOverlay isOpen={trialExpired} onClose={() => setTrialExpired(false)} />
+        <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -187,7 +189,8 @@ const App = () => {
         <Route path="/server-error" element={<ServerError />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-    </BrowserRouter>
+      </BrowserRouter>
+    </GoogleOAuthProvider>
   );
 };
 

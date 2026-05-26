@@ -140,7 +140,9 @@ const Upgrade = ({ standalone = false }) => {
               </li>
             ))}
           </ul>
-          <button className="w-full py-3.5 rounded-full bg-gradient-to-r from-primary to-orange-500 hover:from-orange-600 hover:to-orange-600 text-white font-black text-sm shadow-lg shadow-primary/30 transition-all hover:scale-[1.02]">
+          <button 
+            onClick={() => navigate('/payment')}
+            className="w-full py-3.5 rounded-full bg-gradient-to-r from-primary to-orange-500 hover:from-orange-600 hover:to-orange-600 text-white font-black text-sm shadow-lg shadow-primary/30 transition-all hover:scale-[1.02]">
             Mulai Premium Sekarang →
           </button>
         </div>
