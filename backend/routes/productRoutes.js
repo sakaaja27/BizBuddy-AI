@@ -9,10 +9,11 @@ const {
   getStockMovements
 } = require('../controllers/productController');
 const { protect } = require('../middleware/authMiddleware');
+const { planLimitMiddleware } = require('../middleware/planLimitMiddleware');
 
 router.route('/')
   .get(protect, getProducts)
-  .post(protect, createProduct);
+  .post(protect, planLimitMiddleware('products'), createProduct);
 
 router.get('/movements', protect, getStockMovements);
 

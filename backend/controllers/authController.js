@@ -80,6 +80,10 @@ const getMe = async (req, res) => {
     const business = await Business.findOne({ userId: req.user.id });
     if (business && user) {
       user.businessName = business.businessName;
+      user.businessType = business.businessType;
+      user.city = business.city;
+      user.description = business.description;
+      user.address = business.address;
     }
     res.json(user);
   } catch (error) {

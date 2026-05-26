@@ -1,12 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
-import { Package, Plus, Sparkles, ArrowRight, Search, List, Grid, GripVertical, Loader2, X, Check, Trash2, Edit2, AlertTriangle } from 'lucide-react';
+import { Package, Plus, Sparkles, ArrowRight, Search, List, Grid, GripVertical, Loader2, X, Check, Trash2, Edit2, AlertTriangle, UtensilsCrossed, ShoppingBag, Bike, Smartphone, Store, MessageCircle, ShoppingCart, UserCheck, CalendarCheck, Home, ClipboardList, Sparkles as SparklesIcon, Truck, Globe } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import RecentOrdersTable from '../components/dashboard/RecentOrdersTable';
+import useAuthStore from '../store/useAuthStore';
+import { ORDER_CONFIG } from '../config/orderConfig';
+
+const iconMap = {
+  UtensilsCrossed, ShoppingBag, Bike, Smartphone, Store, MessageCircle, ShoppingCart, Instagram: ShoppingCart, UserCheck, CalendarCheck, Home, ClipboardList, Sparkles: SparklesIcon, Truck, Globe
+};
 
 const Orders = () => {
+  const { user } = useAuthStore();
+  const businessType = user?.businessType || 'other';
+  const config = ORDER_CONFIG[businessType] || ORDER_CONFIG['other'];
+
   const [orders, setOrders] = useState([]);
   const [products, setProducts] = useState([]);
   const [viewMode, setViewMode] = useState('kanban'); // 'kanban' or 'table'
@@ -19,14 +29,19 @@ const Orders = () => {
   // Manual Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState(null);
-  const [newOrder, setNewOrder] = useState({
+  const initialOrderState = {
     customerName: '',
-    orderType: 'meja',
+    orderType: config.orderTypes[0].value,
     tableNumber: '',
     address: '',
     items: [],
-    notes: ''
-  });
+    notes: '',
+    deliveryAddress: '', shippingAddress: '', courierService: '', trackingNumber: '', 
+    platformOrderId: '', appointmentDate: '', appointmentTime: '', technicianName: '', 
+    customDetails: '', dueDate: '', downPayment: 0, paymentMethod: '', size: '', color: '', customerPhone: ''
+  };
+
+  const [newOrder, setNewOrder] = useState(initialOrderState);
   const [selectedProductId, setSelectedProductId] = useState('');
   const [selectedQty, setSelectedQty] = useState(1);
   const [deleteOrderId, setDeleteOrderId] = useState(null);
@@ -121,14 +136,7 @@ const Orders = () => {
 
   const openAddModal = () => {
     setEditingOrderId(null);
-    setNewOrder({
-      customerName: '',
-      orderType: 'meja',
-      tableNumber: '',
-      address: '',
-      items: [],
-      notes: ''
-    });
+    setNewOrder(initialOrderState);
     setSelectedProductId('');
     setSelectedQty(1);
     setIsModalOpen(true);
@@ -137,12 +145,9 @@ const Orders = () => {
   const openEditModal = (order) => {
     setEditingOrderId(order._id);
     setNewOrder({
-      customerName: order.customerName,
-      orderType: order.orderType || 'meja',
-      tableNumber: order.tableNumber || '',
-      address: order.address || '',
-      items: order.items,
-      notes: order.notes || ''
+      ...initialOrderState,
+      ...order,
+      orderType: order.orderType || config.orderTypes[0].value,
     });
     setSelectedProductId('');
     setSelectedQty(1);
@@ -289,31 +294,38 @@ const Orders = () => {
 
   const filteredOrders = orders.filter(o => o.customerName.toLowerCase().includes(searchQuery.toLowerCase()));
 
-  const pendingOrders = filteredOrders.filter(o => o.status === 'pending');
-  const processingOrders = filteredOrders.filter(o => o.status === 'processing');
-  const doneOrders = filteredOrders.filter(o => o.status === 'done');
+  const renderKanbanColumn = (column, items) => {
+    const { key, label, color } = column;
+    
+    // Convert text colors dynamically using predefined Tailwind colors
+    const colorMap = {
+      orange: { bg: 'bg-orange-50', header: 'bg-orange-100', dot: 'bg-orange-500', text: 'text-orange-700' },
+      yellow: { bg: 'bg-yellow-50', header: 'bg-yellow-100', dot: 'bg-yellow-500', text: 'text-yellow-700' },
+      blue: { bg: 'bg-blue-50', header: 'bg-blue-100', dot: 'bg-blue-500', text: 'text-blue-700' },
+      green: { bg: 'bg-green-50', header: 'bg-green-100', dot: 'bg-green-500', text: 'text-green-700' },
+      gold: { bg: 'bg-amber-50', header: 'bg-amber-100', dot: 'bg-amber-500', text: 'text-amber-700' }
+    };
+    const c = colorMap[color] || colorMap.orange;
 
-  // const manualOrderTotal = newOrder.items.reduce((sum, item) => sum + item.subtotal, 0);
-
-  const renderKanbanColumn = (title, id, items, headerBg, dotColor) => (
-    <div className="flex-1 min-w-[280px] flex flex-col h-full">
-      <div className={`flex items-center justify-between p-3 rounded-t-xl ${headerBg} border-b border-gray-100`}>
+    return (
+    <div key={key} className="flex-1 min-w-[280px] flex flex-col h-full">
+      <div className={`flex items-center justify-between p-3 rounded-t-xl ${c.header} border-b border-gray-100`}>
         <div className="flex items-center gap-2">
-          <div className={`w-2.5 h-2.5 rounded-full ${dotColor}`}></div>
-          <h3 className="font-bold text-gray-900">{title}</h3>
+          <div className={`w-2.5 h-2.5 rounded-full ${c.dot}`}></div>
+          <h3 className="font-bold text-gray-900">{label}</h3>
         </div>
-        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${dotColor === 'bg-orange-500' ? 'bg-orange-500 text-white' : dotColor === 'bg-yellow-500' ? 'bg-yellow-500 text-white' : 'bg-green-500 text-white'}`}>
+        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${c.dot} text-white`}>
           {items.length}
         </span>
       </div>
       
-      <Droppable droppableId={id}>
+      <Droppable droppableId={key}>
         {(provided, snapshot) => (
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
             className={`flex-1 p-3 rounded-b-xl border border-t-0 border-gray-100 min-h-[500px] transition-colors
-              ${snapshot.isDraggingOver ? 'bg-orange-50/50 border-orange-200 border-dashed' : id === 'pending' ? 'bg-orange-50' : id === 'processing' ? 'bg-yellow-50' : 'bg-green-50'}`}
+              ${snapshot.isDraggingOver ? 'bg-orange-50/50 border-orange-200 border-dashed' : c.bg}`}
           >
             {items.map((order, index) => (
               <Draggable key={order._id} draggableId={order._id} index={index}>
@@ -332,7 +344,7 @@ const Orders = () => {
                       </div>
                       
                       <div className="flex items-center gap-1">
-                        {id === 'pending' && (
+                        {key === config.kanbanColumns[0].key && (
                           <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center bg-white rounded-lg shadow-sm border border-gray-100 p-0.5">
                             <button 
                               onClick={() => openEditModal(order)}
@@ -350,12 +362,12 @@ const Orders = () => {
                             </button>
                           </div>
                         )}
-                        <GripVertical size={16} className={`text-gray-300 group-hover:text-gray-400 transition-colors ${id === 'pending' && 'ml-1'}`} />
+                        <GripVertical size={16} className={`text-gray-300 group-hover:text-gray-400 transition-colors ${key === config.kanbanColumns[0].key && 'ml-1'}`} />
                       </div>
                     </div>
                     
                     <h4 className="font-bold text-gray-900 text-sm mb-2">
-                      {order.customerName} <span className="text-gray-500 font-normal">({order.orderType === 'meja' ? `Meja ${order.tableNumber}` : order.orderType})</span>
+                      {order.customerName} <span className="text-gray-500 font-normal">({order.orderType})</span>
                     </h4>
                     
                     <div className="space-y-1 mb-3">
@@ -368,9 +380,8 @@ const Orders = () => {
                     </div>
 
                     <div className="flex justify-between items-end mt-4 pt-3 border-t border-gray-50">
-                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider
-                        ${id === 'pending' ? 'bg-orange-100 text-orange-700' : id === 'processing' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}`}>
-                        {id === 'pending' ? 'Baru' : id === 'processing' ? 'Dimasak' : 'Diambil'}
+                      <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${c.header} ${c.text}`}>
+                        {label}
                       </span>
                       <span className="font-bold text-gray-900 text-sm">Rp {order.totalAmount?.toLocaleString('id-ID')}</span>
                     </div>
@@ -383,7 +394,7 @@ const Orders = () => {
         )}
       </Droppable>
     </div>
-  );
+  )};
 
   const manualOrderTotal = newOrder.items.reduce((sum, item) => sum + (item.subtotal || 0), 0);
 
@@ -421,7 +432,7 @@ const Orders = () => {
                 type="text"
                 value={aiInput}
                 onChange={(e) => setAiInput(e.target.value)}
-                placeholder="Ketik pesanan... cth: '2 nasi goreng meja 3'"
+                placeholder={config.aiParserHint || "Ketik pesanan..."}
                 className="flex-1 bg-transparent border-none focus:ring-0 text-gray-900 text-sm md:text-base placeholder-gray-400 py-2 w-full min-w-0"
                 disabled={isAiProcessing || aiParsedResult}
               />
@@ -479,7 +490,7 @@ const Orders = () => {
                 <p className="text-xs text-gray-500 mb-1">Pelanggan</p>
                 <p className="font-bold">{aiParsedResult.customerName}</p>
                 <p className="text-sm text-gray-600 mt-2 capitalize">
-                  {aiParsedResult.orderType === 'meja' ? `Meja ${aiParsedResult.tableNumber}` : aiParsedResult.orderType}
+                  {aiParsedResult.orderType}
                 </p>
               </div>
               
@@ -507,12 +518,9 @@ const Orders = () => {
                 // Pre-fill the edit modal with AI result
                 setEditingOrderId(null);
                 setNewOrder({
-                  customerName: aiParsedResult.customerName || '',
-                  orderType: aiParsedResult.orderType || 'meja',
-                  tableNumber: aiParsedResult.tableNumber || '',
-                  address: aiParsedResult.address || '',
-                  items: aiParsedResult.items || [],
-                  notes: aiParsedResult.notes || ''
+                  ...initialOrderState,
+                  ...aiParsedResult,
+                  orderType: aiParsedResult.orderType || config.orderTypes[0].value
                 });
                 setAiParsedResult(null);
                 setIsModalOpen(true);
@@ -560,8 +568,8 @@ const Orders = () => {
         {orders.length === 0 && !isLoading && (
           <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center shadow-sm">
             <div className="text-6xl mb-4">📦</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">Belum ada pesanan hari ini</h3>
-            <p className="text-gray-500 max-w-md mx-auto">Gunakan input AI di atas atau tombol "+ Tambah Pesanan" untuk mulai menambahkan transaksi.</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Belum ada pesanan</h3>
+            <p className="text-gray-500 max-w-md mx-auto">{config.emptyStateMessage || "Gunakan input AI di atas atau tombol '+ Tambah Pesanan' untuk mulai menambahkan transaksi."}</p>
           </div>
         )}
 
@@ -569,9 +577,7 @@ const Orders = () => {
         {orders.length > 0 && viewMode === 'kanban' && (
           <DragDropContext onDragEnd={onDragEnd}>
             <div className="flex flex-col md:flex-row gap-6 overflow-x-auto pb-4 hide-scrollbar">
-              {renderKanbanColumn('Pending', 'pending', pendingOrders, 'bg-orange-100', 'bg-orange-500')}
-              {renderKanbanColumn('Diproses', 'processing', processingOrders, 'bg-yellow-100', 'bg-yellow-500')}
-              {renderKanbanColumn('Selesai', 'done', doneOrders, 'bg-green-100', 'bg-green-500')}
+              {config.kanbanColumns.map(col => renderKanbanColumn(col, filteredOrders.filter(o => o.status === col.key)))}
             </div>
           </DragDropContext>
         )}
@@ -584,17 +590,18 @@ const Orders = () => {
         {isModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl overflow-hidden animate-slide-up flex flex-col max-h-[90vh]">
-              <div className="flex justify-between items-center p-5 border-b border-gray-00 bg-gray-50/50">
+              <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-gray-50/50">
                 <h3 className="font-bold text-gray-900 text-lg">
                   {editingOrderId ? 'Edit Pesanan' : 'Tambah Pesanan Manual'}
                 </h3>
                 <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:bg-gray-100 p-1.5 rounded-lg transition-colors"><X size={20} /></button>
               </div>
               
-              <div className="p-6 overflow-y-auto flex-1">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+              <div className="p-6 overflow-y-auto flex-1 space-y-4">
+                {/* Row 1: Nama + Tipe */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Nama Pelanggan</label>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nama Pelanggan</label>
                     <input 
                       type="text" 
                       value={newOrder.customerName}
@@ -604,53 +611,295 @@ const Orders = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Tipe Pesanan</label>
-                    <div className="flex gap-2">
-                      <button 
-                        onClick={() => setNewOrder({...newOrder, orderType: 'meja', address: ''})}
-                        className={`flex-1 py-2 font-semibold rounded-xl text-sm border transition-colors ${newOrder.orderType === 'meja' ? 'bg-primary/10 text-primary border-primary' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tipe Pesanan</label>
+                    <div className="relative">
+                      <select
+                        value={newOrder.orderType}
+                        onChange={(e) => setNewOrder({...newOrder, orderType: e.target.value})}
+                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pr-10 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm bg-white appearance-none cursor-pointer"
                       >
-                        Meja
-                      </button>
-                      <button 
-                        onClick={() => setNewOrder({...newOrder, orderType: 'bungkus', tableNumber: '', address: ''})}
-                        className={`flex-1 py-2 font-semibold rounded-xl text-sm border transition-colors ${newOrder.orderType === 'bungkus' ? 'bg-primary/10 text-primary border-primary' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}
-                      >
-                        Bungkus
-                      </button>
-                      <button 
-                        onClick={() => setNewOrder({...newOrder, orderType: 'delivery', tableNumber: ''})}
-                        className={`flex-1 py-2 font-semibold rounded-xl text-sm border transition-colors ${newOrder.orderType === 'delivery' ? 'bg-primary/10 text-primary border-primary' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}
-                      >
-                        Delivery
-                      </button>
+                        {config.orderTypes.map(type => (
+                          <option key={type.value} value={type.value}>{type.label}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                      </div>
                     </div>
                   </div>
                 </div>
 
-                {newOrder.orderType === 'meja' && (
-                  <div className="mb-4">
-                    <label className="block text-sm font-semibold text-gray-700 mb-1">Nomor Meja</label>
+                {/* Dynamic Fields Based on orderType */}
+                {(() => {
+                  const activeFields = config.orderTypes.find(t => t.value === newOrder.orderType)?.fields || [];
+                  if (activeFields.length === 0) return null;
+                  
+                  const inlineFields = activeFields.filter(f => !['deliveryAddress','shippingAddress','serviceAddress','customDetails'].includes(f));
+                  const textareaFields = activeFields.filter(f => ['deliveryAddress','shippingAddress','serviceAddress','customDetails'].includes(f));
+                  
+                  return (
+                    <>
+                      {inlineFields.length > 0 && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {inlineFields.includes('tableNumber') && (
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nomor Meja</label>
+                              <input type="text" value={newOrder.tableNumber} onChange={e => setNewOrder({...newOrder, tableNumber: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm" placeholder="Contoh: 4" />
+                            </div>
+                          )}
+                          {inlineFields.includes('customerPhone') && (
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Nomor WhatsApp</label>
+                              <input type="tel" value={newOrder.customerPhone} onChange={e => setNewOrder({...newOrder, customerPhone: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm" placeholder="08..." />
+                            </div>
+                          )}
+                          {inlineFields.includes('platformOrderId') && (
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-1.5">ID Pesanan (Platform)</label>
+                              <input type="text" value={newOrder.platformOrderId} onChange={e => setNewOrder({...newOrder, platformOrderId: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm" placeholder="Contoh: ORD-123" />
+                            </div>
+                          )}
+                          {inlineFields.includes('appointmentDate') && (
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tanggal</label>
+                              <input type="date" value={newOrder.appointmentDate} onChange={e => setNewOrder({...newOrder, appointmentDate: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm bg-white" />
+                            </div>
+                          )}
+                          {inlineFields.includes('appointmentTime') && (
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Waktu</label>
+                              <input type="time" value={newOrder.appointmentTime} onChange={e => setNewOrder({...newOrder, appointmentTime: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm bg-white" />
+                            </div>
+                          )}
+                          {inlineFields.includes('dueDate') && (
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Tenggat / Tanggal Ambil</label>
+                              <input type="date" value={newOrder.dueDate} onChange={e => setNewOrder({...newOrder, dueDate: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm bg-white" />
+                            </div>
+                          )}
+                          {inlineFields.includes('downPayment') && (
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-1.5">DP (Uang Muka)</label>
+                              <div className="relative">
+                                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">Rp</span>
+                                <input type="text" value={newOrder.downPayment ? Number(newOrder.downPayment).toLocaleString('id-ID') : ''} onChange={e => setNewOrder({...newOrder, downPayment: Number(e.target.value.replace(/\D/g, ''))})} className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm bg-white" placeholder="0" />
+                              </div>
+                            </div>
+                          )}
+                          {inlineFields.includes('courierService') && (
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Ekspedisi</label>
+                              <div className="relative">
+                                <select value={newOrder.courierService} onChange={e => setNewOrder({...newOrder, courierService: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pr-10 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm bg-white appearance-none cursor-pointer">
+                                  <option value="">Pilih Ekspedisi...</option>
+                                  {config.extraFields?.courierService?.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                                </select>
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {textareaFields.map(field => {
+                        const labelMap = { deliveryAddress: 'Alamat Pengiriman', shippingAddress: 'Alamat Pengiriman (Resi)', serviceAddress: 'Alamat Servis / Panggilan', customDetails: 'Detail Custom' };
+                        const placeholderMap = { deliveryAddress: 'Masukkan alamat lengkap...', shippingAddress: 'Masukkan alamat lengkap...', serviceAddress: 'Masukkan alamat...', customDetails: config.extraFields?.customDetails?.placeholder || 'Detail pesanan...' };
+                        return (
+                          <div key={field}>
+                            <label className="block text-sm font-semibold text-gray-700 mb-1.5">{labelMap[field]}</label>
+                            <textarea value={newOrder[field] || ''} onChange={e => setNewOrder({...newOrder, [field]: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm resize-none" placeholder={placeholderMap[field]} rows="2"></textarea>
+                          </div>
+                        );
+                      })}
+                    </>
+                  );
+                })()}
+
+                {/* Item Picker */}
+                <div className="pt-4 border-t border-gray-100">
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">Pilih Item</label>
+                  <div className="flex flex-col sm:flex-row gap-2 mb-3">
+                    <div className="relative flex-1">
+                      <select 
+                        value={selectedProductId}
+                        onChange={(e) => setSelectedProductId(e.target.value)}
+                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 pr-10 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm bg-white appearance-none cursor-pointer"
+                      >
+                        <option value="">-- Pilih Produk --</option>
+                        {products.map(p => (
+                          <option key={p._id} value={p._id}>{p.name} — Rp {p.sellPrice?.toLocaleString('id-ID')}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <input 
+                        type="number" 
+                        min="1"
+                        value={selectedQty}
+                        onChange={(e) => setSelectedQty(e.target.value)}
+                        className="w-20 border border-gray-200 rounded-xl px-3 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm text-center" 
+                      />
+                      <button 
+                        onClick={handleAddItem}
+                        disabled={!selectedProductId}
+                        className="flex-1 sm:flex-none bg-orange-100 text-orange-600 hover:bg-orange-200 px-4 py-2.5 rounded-xl font-bold transition-colors disabled:opacity-50 text-sm"
+                      >
+                        + Tambah
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Added Items List */}
+                  {newOrder.items.length > 0 ? (
+                    <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 mb-4 space-y-2">
+                      {newOrder.items.map((item, idx) => (
+                        <div key={idx} className="flex justify-between items-center text-sm bg-white p-2.5 rounded-lg border border-gray-100 shadow-sm">
+                          <div className="flex items-center gap-3">
+                            <span className="font-bold text-gray-900 bg-gray-100 w-6 h-6 flex items-center justify-center rounded-md text-xs">{item.qty}x</span>
+                            <span className="font-medium text-gray-700">{item.productName}</span>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <span className="font-semibold text-gray-900">Rp {item.subtotal?.toLocaleString('id-ID')}</span>
+                            <button onClick={() => handleRemoveItem(idx)} className="text-red-400 hover:text-red-600 transition-colors">
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                      <div className="flex justify-between items-center pt-2 px-2 mt-2 border-t border-gray-200">
+                        <span className="font-bold text-gray-700">Total Harga:</span>
+                        <span className="font-bold text-primary text-lg">Rp {manualOrderTotal.toLocaleString('id-ID')}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center p-4 bg-gray-50 border border-dashed border-gray-200 rounded-xl text-sm text-gray-500 mb-4">
+                      Belum ada item pesanan
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Catatan Tambahan (Opsional)</label>
                     <input 
                       type="text" 
-                      value={newOrder.tableNumber}
-                      onChange={(e) => setNewOrder({...newOrder, tableNumber: e.target.value})}
+                      value={newOrder.notes}
+                      onChange={(e) => setNewOrder({...newOrder, notes: e.target.value})}
                       className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm" 
-                      placeholder="Contoh: 4" 
+                      placeholder="Contoh: ekstra pedas, jangan pakai daun bawang" 
                     />
                   </div>
-                )}
+                </div>
+              </div>
 
-                {newOrder.orderType === 'delivery' && (
+              <div className="p-5 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 shrink-0">
+                <button onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 bg-white border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors shadow-sm">Batal</button>
+                <button onClick={handleManualSubmit} className="px-6 py-2.5 bg-primary hover:bg-orange-600 text-white font-bold rounded-xl transition-colors shadow-md shadow-primary/20 flex items-center">
+                  <Check size={18} className="mr-2" /> Simpan Pesanan
+                </button>
+              </div>
+            </div>
+        )}
+
+
+                    <div className="flex flex-wrap gap-2">
+                      {config.orderTypes.map(type => {
+                        const IconComponent = iconMap[type.icon] || ShoppingBag;
+                        return (
+                          <button 
+                            key={type.value}
+                            onClick={() => setNewOrder({...newOrder, orderType: type.value})}
+                            className={`flex items-center justify-center gap-2 flex-1 min-w-[120px] py-2 px-3 font-semibold rounded-xl text-sm border transition-colors ${newOrder.orderType === type.value ? 'bg-primary/10 text-primary border-primary' : 'bg-gray-50 text-gray-600 border-gray-200 hover:bg-gray-100'}`}
+                          >
+                            <IconComponent size={16} />
+                            {type.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Render Dynamic Fields Based on orderType */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                  {config.orderTypes.find(t => t.value === newOrder.orderType)?.fields?.includes('tableNumber') && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Nomor Meja</label>
+                      <input type="text" value={newOrder.tableNumber} onChange={e => setNewOrder({...newOrder, tableNumber: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm" placeholder="Contoh: 4" />
+                    </div>
+                  )}
+                  {config.orderTypes.find(t => t.value === newOrder.orderType)?.fields?.includes('customerPhone') && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Nomor WhatsApp</label>
+                      <input type="tel" value={newOrder.customerPhone} onChange={e => setNewOrder({...newOrder, customerPhone: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm" placeholder="08..." />
+                    </div>
+                  )}
+                  {config.orderTypes.find(t => t.value === newOrder.orderType)?.fields?.includes('platformOrderId') && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">ID Pesanan (Platform)</label>
+                      <input type="text" value={newOrder.platformOrderId} onChange={e => setNewOrder({...newOrder, platformOrderId: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm" placeholder="Contoh: ORD-123" />
+                    </div>
+                  )}
+                  {config.orderTypes.find(t => t.value === newOrder.orderType)?.fields?.includes('appointmentDate') && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Tanggal</label>
+                      <input type="date" value={newOrder.appointmentDate} onChange={e => setNewOrder({...newOrder, appointmentDate: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm bg-white" />
+                    </div>
+                  )}
+                  {config.orderTypes.find(t => t.value === newOrder.orderType)?.fields?.includes('appointmentTime') && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Waktu</label>
+                      <input type="time" value={newOrder.appointmentTime} onChange={e => setNewOrder({...newOrder, appointmentTime: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm bg-white" />
+                    </div>
+                  )}
+                  {config.orderTypes.find(t => t.value === newOrder.orderType)?.fields?.includes('dueDate') && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Tenggat Waktu / Ambil</label>
+                      <input type="date" value={newOrder.dueDate} onChange={e => setNewOrder({...newOrder, dueDate: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm bg-white" />
+                    </div>
+                  )}
+                  {config.orderTypes.find(t => t.value === newOrder.orderType)?.fields?.includes('downPayment') && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">DP (Uang Muka)</label>
+                      <input type="number" value={newOrder.downPayment} onChange={e => setNewOrder({...newOrder, downPayment: Number(e.target.value)})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm bg-white" />
+                    </div>
+                  )}
+                  {config.orderTypes.find(t => t.value === newOrder.orderType)?.fields?.includes('courierService') && (
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1">Ekspedisi</label>
+                      <select value={newOrder.courierService} onChange={e => setNewOrder({...newOrder, courierService: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm bg-white">
+                        <option value="">Pilih Ekspedisi...</option>
+                        {config.extraFields?.courierService?.options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                {config.orderTypes.find(t => t.value === newOrder.orderType)?.fields?.includes('deliveryAddress') && (
                   <div className="mb-4">
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Alamat Pengiriman</label>
-                    <textarea 
-                      value={newOrder.address}
-                      onChange={(e) => setNewOrder({...newOrder, address: e.target.value})}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm" 
-                      placeholder="Masukkan alamat lengkap..." 
-                      rows="2"
-                    ></textarea>
+                    <textarea value={newOrder.deliveryAddress} onChange={e => setNewOrder({...newOrder, deliveryAddress: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm" placeholder="Masukkan alamat lengkap..." rows="2"></textarea>
+                  </div>
+                )}
+                {config.orderTypes.find(t => t.value === newOrder.orderType)?.fields?.includes('shippingAddress') && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Alamat Pengiriman (Resi)</label>
+                    <textarea value={newOrder.shippingAddress} onChange={e => setNewOrder({...newOrder, shippingAddress: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm" placeholder="Masukkan alamat lengkap..." rows="2"></textarea>
+                  </div>
+                )}
+                {config.orderTypes.find(t => t.value === newOrder.orderType)?.fields?.includes('serviceAddress') && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Alamat Servis / Panggilan</label>
+                    <textarea value={newOrder.serviceAddress} onChange={e => setNewOrder({...newOrder, serviceAddress: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm" placeholder="Masukkan alamat lengkap..." rows="2"></textarea>
+                  </div>
+                )}
+                {config.orderTypes.find(t => t.value === newOrder.orderType)?.fields?.includes('customDetails') && (
+                  <div className="mb-4">
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">Detail Custom</label>
+                    <textarea value={newOrder.customDetails} onChange={e => setNewOrder({...newOrder, customDetails: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all outline-none text-sm" placeholder={config.extraFields?.customDetails?.placeholder || "Detail pesanan..."} rows="2"></textarea>
                   </div>
                 )}
 

@@ -1,11 +1,13 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, BarChart2, Package, Wallet, Sparkles, HelpCircle, Settings, ShoppingBag, Bot, X } from 'lucide-react';
 import useAuthStore from '../../store/useAuthStore';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const initial = user?.name ? user.name.charAt(0).toUpperCase() : 'B';
+  const isPremium = user?.plan === 'premium' || user?.plan === 'enterprise';
 
   const menuItems = [
     { name: 'Beranda', icon: LayoutDashboard, path: '/dashboard' },
@@ -15,7 +17,6 @@ const Sidebar = ({ isOpen, onClose }) => {
     { name: 'Keuangan', icon: Wallet, path: '/dashboard/finance' },
     { name: 'Review Intelligence', icon: Sparkles, path: '/dashboard/reviews' },
     { name: 'AI Assistant', icon: Bot, path: '/dashboard/ai-assistant', isAi: true },
-    { name: 'Bantuan', icon: HelpCircle, path: '/help' },
   ];
 
   return (
@@ -37,8 +38,10 @@ const Sidebar = ({ isOpen, onClose }) => {
               {initial}
             </div>
             <div>
-              <h3 className="font-bold text-gray-900 leading-tight truncate w-32">{user?.businessName || 'Warung Makan Budi'}</h3>
-              <span className="text-[10px] uppercase font-bold tracking-wider text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full inline-block mt-1">Premium Plan</span>
+              <h3 className="font-bold text-gray-900 leading-tight truncate w-32">{user?.businessName}</h3>
+              <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full inline-block mt-1 ${isPremium ? 'bg-orange-100 text-primary' : 'bg-gray-100 text-gray-400'}`}>
+                {isPremium ? '⭐ Premium Plan' : 'Free Plan'}
+              </span>
             </div>
           </div>
           {/* Close button for mobile */}
@@ -82,11 +85,19 @@ const Sidebar = ({ isOpen, onClose }) => {
 
       {/* Bottom Section */}
       <div className="p-4 border-t border-gray-50 space-y-4">
-        <button className="w-full bg-gradient-to-r from-primary to-orange-500 hover:from-orange-600 hover:to-orange-600 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center">
-          <Sparkles size={18} className="mr-2" />
-          Upgrade Bisnis
-        </button>
-        <button className="flex items-center w-full px-4 py-2 text-gray-500 hover:text-gray-900 transition-colors">
+        {!isPremium && (
+          <button 
+            onClick={() => { navigate('/dashboard/upgrade'); if(window.innerWidth < 768) onClose(); }}
+            className="w-full bg-gradient-to-r from-primary to-orange-500 hover:from-orange-600 hover:to-orange-600 text-white font-bold py-3 rounded-xl transition-all shadow-lg shadow-primary/20 flex items-center justify-center"
+          >
+            <Sparkles size={18} className="mr-2" />
+            Upgrade Bisnis
+          </button>
+        )}
+        <button 
+          onClick={() => { navigate('/dashboard/settings'); if(window.innerWidth < 768) onClose(); }}
+          className="flex items-center w-full px-4 py-2 text-gray-500 hover:text-gray-900 transition-colors"
+        >
           <Settings size={20} className="mr-3 text-gray-400" />
           <span className="font-medium">Pengaturan</span>
         </button>

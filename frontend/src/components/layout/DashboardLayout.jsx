@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import TopNavbar from './TopNavbar';
 import BottomNav from './BottomNav';
+import TrialBanner from '../dashboard/TrialBanner';
 
 const DashboardLayout = ({ children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -20,7 +21,10 @@ const DashboardLayout = ({ children }) => {
         
         {/* Main Content Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 w-full max-w-[1600px] mx-auto overflow-x-hidden">
-          {children}
+          <TrialBanner />
+          <div className="animate-page-enter">
+            {children}
+          </div>
         </main>
       </div>
 

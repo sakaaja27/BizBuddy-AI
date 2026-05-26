@@ -15,6 +15,8 @@ const aiRoutes = require('./routes/aiRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const financeRoutes = require('./routes/financeRoutes');
+const subscriptionRoutes = require('./routes/subscriptionRoutes');
+const userRoutes = require('./routes/userRoutes');
 const path = require('path');
 
 const app = express();
@@ -33,6 +35,8 @@ app.use('/api/ai', aiRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/finance', financeRoutes);
+app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/users', userRoutes);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

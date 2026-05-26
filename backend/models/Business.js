@@ -2,15 +2,13 @@ const mongoose = require('mongoose');
 
 const businessSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  businessName: { type: String, required: true },
-  businessType: { 
-    type: String, 
-    enum: ['fnb', 'fashion', 'jasa', 'retail', 'home_industry', 'other'],
-    required: true
-  },
-  city: { type: String, required: true },
-  yearsRunning: { type: String, required: true },
-  productCount: { type: String, required: true },
+  businessName: { type: String },
+  businessType: { type: String, required: true },
+  city: { type: String },
+  description: { type: String },
+  address: { type: String },
+  yearsRunning: { type: String },
+  productCount: { type: String },
   platforms: [{ type: String }],
   createdAt: { type: Date, default: Date.now }
 }, { timestamps: true });

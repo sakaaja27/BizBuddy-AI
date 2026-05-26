@@ -2,70 +2,98 @@ const Business = require('../models/Business');
 const Product = require('../models/Product');
 const User = require('../models/User');
 
-const saveBusiness = async (req, res) => {
+const step1 = async (req, res) => {
   try {
-    const { businessName, businessType, city, yearsRunning, productCount, platforms } = req.body;
+    const { businessType } = req.body;
+    let business = await Business.findOne({ userId: req.user.id });
     
-    // Check if user already has a business profile
-    const existingBusiness = await Business.findOne({ userId: req.user.id });
-    if (existingBusiness) {
-      return res.status(400).json({ message: 'Profil bisnis sudah ada' });
+    if (business) {
+      business.businessType = businessType;
+      await business.save();
+    } else {
+      business = await Business.create({
+        userId: req.user.id,
+        businessType
+      });
     }
 
-    const business = await Business.create({
-      userId: req.user.id,
-      businessName,
-      businessType,
-      city,
-      yearsRunning,
-      productCount,
-      platforms
-    });
-
-    // Update user onboarding status
-    await User.findByIdAndUpdate(req.user.id, { isOnboardingComplete: true });
-
-    res.status(201).json(business);
+    res.status(200).json({ business });
   } catch (error) {
-    res.status(500).json({ message: 'Gagal menyimpan profil bisnis', error: error.message });
+    res.status(500).json({ message: 'Gagal memproses step 1', error: error.message });
   }
 };
 
-const saveFirstProduct = async (req, res) => {
+const step2 = async (req, res) => {
   try {
-    const { name, category, price, stock } = req.body;
+    const { businessName, city, yearsRunning, productCount, platforms } = req.body;
+    
+    let business = await Business.findOne({ userId: req.user.id });
+    if (!business) {
+      return res.status(404).json({ message: 'Profil bisnis belum ada, silakan mulai dari langkah 1' });
+    }
+
+    business.businessName = businessName;
+    business.city = city;
+    business.yearsRunning = yearsRunning;
+    business.productCount = productCount;
+    business.platforms = platforms;
+    
+    await business.save();
+
+    res.status(200).json({ business });
+  } catch (error) {
+    res.status(500).json({ message: 'Gagal memproses step 2', error: error.message });
+  }
+};
+
+const step3 = async (req, res) => {
+  try {
+    const { product } = req.body;
     
     const business = await Business.findOne({ userId: req.user.id });
     if (!business) {
-      return res.status(400).json({ message: 'Silakan isi profil bisnis terlebih dahulu' });
+      return res.status(404).json({ message: 'Profil bisnis tidak ditemukan' });
     }
 
-    const product = await Product.create({
-      userId: req.user.id,
-      businessId: business._id,
-      name,
-      category,
-      price,
-      stock
-    });
+    let newProduct = null;
+    if (product && product.name && product.price) {
+      newProduct = await Product.create({
+        userId: req.user.id,
+        businessId: business._id,
+        name: product.name,
+        category: product.category || 'Umum',
+        sellPrice: product.price,
+        buyPrice: product.buyPrice || 0,
+        stock: product.stock || 0,
+        minStock: product.minStock || 5,
+        unit: product.unit || 'pcs'
+      });
+    }
 
-    res.status(201).json(product);
+    await User.findByIdAndUpdate(req.user.id, { isOnboardingComplete: true });
+
+    res.status(200).json({ business, product: newProduct });
   } catch (error) {
-    res.status(500).json({ message: 'Gagal menyimpan produk', error: error.message });
+    res.status(500).json({ message: 'Gagal memproses step 3', error: error.message });
   }
 };
 
 const getStatus = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    res.json({ isOnboardingComplete: user.isOnboardingComplete });
+    const business = await Business.findOne({ userId: req.user.id });
+    res.json({ 
+      isComplete: user.isOnboardingComplete,
+      business 
+    });
   } catch (error) {
     res.status(500).json({ message: 'Terjadi kesalahan pada server' });
   }
 };
 
 module.exports = {
-  saveBusiness,
-  saveFirstProduct,
+  step1,
+  step2,
+  step3,
   getStatus
 };

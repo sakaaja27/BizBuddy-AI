@@ -268,6 +268,10 @@ const parseAIOrder = async (req, res) => {
     // Get all ACTIVE products to give context to AI
     const products = await Product.find({ userId, isActive: true, stock: { $gt: 0 } });
     
+    const business = await Business.findOne({ userId });
+    const businessType = business ? business.businessType : 'other';
+    const businessName = business ? business.businessName : 'UMKM';
+
     if (!process.env.GROQ_API_KEY) {
       return res.status(500).json({ message: 'Groq API Key belum dikonfigurasi' });
     }
@@ -278,47 +282,61 @@ const parseAIOrder = async (req, res) => {
     const menuContext = products.map(p => ({
       id: p._id,
       name: p.name,
-      price: p.sellPrice, // Using sellPrice based on new schema
+      price: p.sellPrice,
       stock: p.stock,
       unit: p.unit
     }));
 
-    const prompt = `
-Kamu adalah sistem parser pesanan cerdas untuk UMKM Indonesia.
-Tugas Anda adalah mem-parse teks pesanan alami dari pengguna dan mencocokkannya dengan menu yang tersedia.
+    // Dynamic output format based on business type
+    let extraFieldsPrompt = '';
+    if (businessType === 'fnb') {
+      extraFieldsPrompt = `"orderType": "dine_in|takeaway|delivery|gofood|grabfood", "tableNumber": "string", "deliveryAddress": "string"`;
+    } else if (businessType === 'fashion') {
+      extraFieldsPrompt = `"orderType": "offline|whatsapp|shopee|tokopedia|instagram", "shippingAddress": "string", "courierService": "string", "size": "string", "color": "string"`;
+    } else if (businessType === 'jasa') {
+      extraFieldsPrompt = `"orderType": "walk_in|appointment|home_service|whatsapp", "appointmentDate": "YYYY-MM-DD", "appointmentTime": "HH:MM", "serviceAddress": "string"`;
+    } else if (businessType === 'retail') {
+      extraFieldsPrompt = `"orderType": "cashier|delivery_local|whatsapp", "paymentMethod": "string", "deliveryAddress": "string"`;
+    } else if (businessType === 'home_industry') {
+      extraFieldsPrompt = `"orderType": "pre_order|ready_stock|custom_order|shipping", "dueDate": "YYYY-MM-DD", "customDetails": "string", "downPayment": "number"`;
+    } else {
+      extraFieldsPrompt = `"orderType": "direct|whatsapp|online"`;
+    }
 
-Menu yang tersedia (JSON Array):
+    const prompt = `
+Kamu adalah asisten AI kasir/pesanan untuk bisnis ${businessName} (Tipe Bisnis: ${businessType}).
+Tugas Anda adalah mem-parse teks pesanan alami dari pengguna dan mencocokkannya dengan produk/layanan yang tersedia.
+
+Data Produk/Layanan (JSON Array):
 ${JSON.stringify(menuContext)}
 
 Teks pesanan: "${text}"
 
-ATURAN PARSING SANGAT KETAT:
-1. PENTING: JIKA item yang diminta pengguna TIDAK TERDAFTAR SECARA PERSIS atau tidak memiliki kaitan logis dengan nama di "Menu yang tersedia", JANGAN PERNAH berasumsi atau menggantinya dengan menu lain. Anda WAJIB memasukkannya ke dalam array "notFound" dan JANGAN memasukkannya ke dalam array "items".
-2. Contoh: Jika user memesan "sepatu" atau "baju" tapi di menu hanya ada "Nasi Goreng", masukkan "sepatu" ke "notFound". Jangan paksa memasukkan ke item.
-3. Hanya lakukan fuzzy match jika memang variasi nama wajar (misal "nasgor" -> "Nasi Goreng Spesial").
-4. Jika stok di menu kurang dari jumlah yang dipesan (qty > stock), masukkan ke array "insufficientStock" dengan struktur { name, requested, available }.
-5. Ekstrak data pelanggan dan meja.
+ATURAN PARSING KETAT:
+1. PENTING: JIKA item yang diminta pengguna TIDAK TERDAFTAR SECARA PERSIS, Anda WAJIB memasukkannya ke dalam array "notFound". Jangan paksa memasukkan ke "items".
+2. Ekstrak data pelanggan, jenis pesanan, alamat/tanggal (jika relevan).
 
 KEMBALIKAN HANYA VALID JSON dengan struktur kaku ini:
 {
-  "customerName": "string (nama orang/meja, default 'Anonim')",
-  "orderType": "meja|bungkus|delivery",
-  "tableNumber": "string (opsional)",
+  "customerName": "string",
+  "customerPhone": "string (opsional)",
+  ${extraFieldsPrompt},
   "items": [
     {
-      "productId": "string (id dari menu)",
-      "productName": "string (nama asli dari menu)",
+      "productId": "string (id produk)",
+      "productName": "string (nama asli)",
       "qty": number,
-      "price": number (dari menu),
-      "subtotal": number (qty * price)
+      "price": number,
+      "subtotal": number
     }
   ],
-  "notFound": ["string (nama pesanan yg ga ada di menu)"],
+  "notFound": ["string"],
   "insufficientStock": [
     { "name": "string", "requested": number, "available": number }
   ],
   "totalAmount": number,
-  "confidence": number (float 0.0 - 1.0, seberapa yakin Anda text ini adalah pesanan)
+  "notes": "string",
+  "confidence": number
 }
 `;
 
