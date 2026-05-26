@@ -64,7 +64,11 @@ const loginUser = async (req, res) => {
         email: user.email,
         token: generateToken(user._id),
         isOnboardingComplete: user.isOnboardingComplete,
-        businessName: business ? business.businessName : null
+        businessName: business ? business.businessName : null,
+        businessType: business ? business.businessType : null,
+        city: business ? business.city : null,
+        description: business ? business.description : null,
+        address: business ? business.address : null
       });
     } else {
       res.status(401).json({ message: 'Email atau password salah' });
@@ -127,7 +131,11 @@ const googleLogin = async (req, res) => {
       avatar: user.avatar,
       token: generateToken(user._id),
       isOnboardingComplete: user.isOnboardingComplete,
-      businessName: business ? business.businessName : null
+      businessName: business ? business.businessName : null,
+      businessType: business ? business.businessType : null,
+      city: business ? business.city : null,
+      description: business ? business.description : null,
+      address: business ? business.address : null
     });
 
   } catch (error) {

@@ -19,10 +19,10 @@ const Settings = () => {
 
   // Toko Form
   const [businessName, setBusinessName] = useState(user?.businessName || '');
-  const [businessType, setBusinessType] = useState('');
-  const [city, setCity] = useState('');
-  const [description, setDescription] = useState('');
-  const [address, setAddress] = useState('');
+  const [businessType, setBusinessType] = useState(user?.businessType || '');
+  const [city, setCity] = useState(user?.city || '');
+  const [description, setDescription] = useState(user?.description || '');
+  const [address, setAddress] = useState(user?.address || '');
 
   // Password Form
   const [currentPassword, setCurrentPassword] = useState('');
