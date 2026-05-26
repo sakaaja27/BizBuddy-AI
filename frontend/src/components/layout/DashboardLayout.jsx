@@ -22,7 +22,7 @@ const DashboardLayout = ({ children }) => {
         {/* Main Content Area */}
         <main className="flex-1 p-4 sm:p-6 lg:p-8 pb-24 md:pb-8 w-full max-w-[1600px] mx-auto overflow-x-hidden">
           <TrialBanner />
-          <div className="animate-page-enter">
+          <div className={location.pathname.includes('/orders') ? '' : 'animate-page-enter'}>
             {children}
           </div>
         </main>
