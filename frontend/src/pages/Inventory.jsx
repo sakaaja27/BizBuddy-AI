@@ -242,7 +242,10 @@ const Inventory = () => {
   const getImageUrl = (url) => {
     if (!url) return "";
     if (url.startsWith("/uploads")) {
-      return `http://localhost:5000${url}`;
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      // Remove '/api' from baseUrl if it exists to get the host for uploads
+      const host = baseUrl.replace(/\/api\/?$/, '');
+      return `${host}${url}`;
     }
     return url;
   };

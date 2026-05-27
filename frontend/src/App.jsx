@@ -24,7 +24,7 @@ import useAuthStore from './store/useAuthStore';
 import axios from 'axios';
 import { Toaster } from 'react-hot-toast';
 
-axios.defaults.baseURL = 'http://localhost:5000/api';
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 // Interceptor to always attach token to every request before it is sent
 axios.interceptors.request.use((config) => {
