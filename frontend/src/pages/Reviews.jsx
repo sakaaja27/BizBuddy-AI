@@ -186,6 +186,18 @@ const Reviews = () => {
     }
   };
 
+  const handleRefreshClick = () => {
+    if (analytics?.lastScrapedAt) {
+      const hoursSince = (Date.now() - new Date(analytics.lastScrapedAt).getTime()) / 3600000;
+      if (hoursSince < 1) {
+        const minutesLeft = Math.ceil((1 - hoursSince) * 60);
+        toast.error(`Tunggu ${minutesLeft} menit lagi sebelum refresh (Cooldown)`);
+        return;
+      }
+    }
+    setShowConfirmRefresh(true);
+  };
+
   const triggerScrape = async () => {
     try {
       setShowConfirmRefresh(false);
@@ -372,7 +384,7 @@ const Reviews = () => {
               Diperbarui: {formatTime(analytics.lastAnalyzedAt)}
             </p>
             <button 
-              onClick={() => setShowConfirmRefresh(true)}
+              onClick={handleRefreshClick}
               className="flex items-center justify-center bg-white border border-orange-200 text-primary hover:bg-orange-50 font-bold py-2 px-4 rounded-xl transition-all shadow-sm shadow-orange-100 text-sm"
             >
               <RefreshCw size={16} className="mr-2" /> Refresh Data
@@ -380,21 +392,6 @@ const Reviews = () => {
           </div>
         </div>
 
-        {/* Confirm Refresh Modal */}
-        {showConfirmRefresh && (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white max-w-sm w-full rounded-3xl p-6 shadow-2xl animate-scale-in">
-              <h3 className="text-xl font-black text-gray-900 mb-2">Perbarui Data?</h3>
-              <p className="text-sm text-gray-500 mb-6 leading-relaxed">
-                Proses ini akan mengambil ulang 200 ulasan terbaru dari Google Maps dan menganalisis ulang dengan AI. Estimasi waktu: 2-5 menit.
-              </p>
-              <div className="flex justify-end gap-3">
-                <button onClick={() => setShowConfirmRefresh(false)} className="px-5 py-2.5 text-sm font-bold text-gray-500 hover:bg-gray-50 rounded-xl">Batal</button>
-                <button onClick={triggerScrape} className="px-5 py-2.5 text-sm font-bold text-white bg-primary rounded-xl shadow-md shadow-primary/20">Ya, Perbarui</button>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* TOP STATS */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -456,7 +453,7 @@ const Reviews = () => {
             </div>
             <div>
               <h2 className="text-xl font-black text-gray-900">Hasil Analisis AI</h2>
-              <span className="text-[10px] font-black bg-blue-500 text-white px-2 py-0.5 rounded uppercase tracking-widest">Gemini 2.0 Flash Lite</span>
+              <span className="text-[10px] font-black bg-blue-500 text-white px-2 py-0.5 rounded uppercase tracking-widest">Llama 3.3 (Groq)</span>
             </div>
           </div>
 
@@ -664,19 +661,37 @@ const Reviews = () => {
   };
 
   return (
-    <DashboardLayout>
-      <div className="p-4 md:p-8 min-h-screen bg-[#FAFAFA]">
-        {pageState === 'idle' && (
-          <div className="flex items-center justify-center min-h-[60vh]">
-            <Loader2 className="animate-spin text-primary w-12 h-12" />
+    <>
+      <DashboardLayout>
+        <div className="p-4 md:p-8 min-h-screen bg-[#FAFAFA]">
+          {pageState === 'idle' && (
+            <div className="flex items-center justify-center min-h-[60vh]">
+              <Loader2 className="animate-spin text-primary w-12 h-12" />
+            </div>
+          )}
+          {pageState === 'not_connected' && renderNotConnected()}
+          {(pageState === 'scraping' || pageState === 'analyzing') && <ScrapingView pageState={pageState} />}
+          {pageState === 'error' && renderError()}
+          {pageState === 'done' && renderDone()}
+        </div>
+      </DashboardLayout>
+
+      {/* Confirm Refresh Modal (Full Screen) */}
+      {showConfirmRefresh && (
+        <div className="fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4">
+          <div className="bg-white max-w-sm w-full rounded-3xl p-6 shadow-2xl animate-scale-in">
+            <h3 className="text-xl font-black text-gray-900 mb-2">Perbarui Data?</h3>
+            <p className="text-sm text-gray-500 mb-6 leading-relaxed">
+              Proses ini akan mengambil ulang 200 ulasan terbaru dari Google Maps dan menganalisis ulang dengan AI. Estimasi waktu: 2-5 menit.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setShowConfirmRefresh(false)} className="px-5 py-2.5 text-sm font-bold text-gray-500 hover:bg-gray-50 rounded-xl">Batal</button>
+              <button onClick={triggerScrape} className="px-5 py-2.5 text-sm font-bold text-white bg-primary rounded-xl shadow-md shadow-primary/20">Ya, Perbarui</button>
+            </div>
           </div>
-        )}
-        {pageState === 'not_connected' && renderNotConnected()}
-        {(pageState === 'scraping' || pageState === 'analyzing') && <ScrapingView pageState={pageState} />}
-        {pageState === 'error' && renderError()}
-        {pageState === 'done' && renderDone()}
-      </div>
-    </DashboardLayout>
+        </div>
+      )}
+    </>
   );
 };
 

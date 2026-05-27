@@ -1,12 +1,8 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Groq = require('groq-sdk');
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 async function analyzeReviewsWithGemini(reviews, businessName, businessType) {
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash-lite'
-  });
-
   // Prepare reviews text (max 200)
   const reviewsText = reviews
     .slice(0, 200)
@@ -70,8 +66,14 @@ Respond ONLY with valid JSON, no markdown, no explanation:
 `;
 
   try {
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [{ role: 'user', content: prompt }],
+      model: 'llama-3.3-70b-versatile',
+      temperature: 0.1,
+      response_format: { type: 'json_object' }
+    });
+    
+    const text = chatCompletion.choices[0]?.message?.content;
     
     // Clean response & parse JSON
     const cleaned = text
@@ -81,16 +83,15 @@ Respond ONLY with valid JSON, no markdown, no explanation:
     
     return JSON.parse(cleaned);
   } catch (error) {
-    throw new Error(`Gemini analysis failed: ${error.message}`);
+    if (error.status === 429 || (error.message && error.message.includes('429'))) {
+      throw new Error('API limit billing sudah habis');
+    }
+    throw new Error(`AI analysis failed: ${error.message}`);
   }
 }
 
 // Analyze individual review sentiment
 async function analyzeSingleSentiment(reviewText, rating) {
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash-lite'
-  });
-
   const prompt = `
 Klasifikasikan sentimen review ini.
 Rating: ${rating}/5
@@ -103,11 +104,24 @@ Respond ONLY with JSON:
   "reason": "<alasan singkat>"
 }`;
 
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
-  return JSON.parse(
-    text.replace(/```json|```/g, '').trim()
-  );
+  try {
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [{ role: 'user', content: prompt }],
+      model: 'llama-3.1-8b-instant',
+      temperature: 0.1,
+      response_format: { type: 'json_object' }
+    });
+    
+    const text = chatCompletion.choices[0]?.message?.content;
+    return JSON.parse(
+      text.replace(/```json|```/g, '').trim()
+    );
+  } catch (error) {
+    if (error.status === 429 || (error.message && error.message.includes('429'))) {
+      throw new Error('API limit billing sudah habis');
+    }
+    throw error;
+  }
 }
 
 module.exports = {

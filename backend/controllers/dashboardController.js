@@ -153,6 +153,8 @@ const getDashboardStats = async (req, res) => {
       body: aiReportBody
     };
 
+    const totalProducts = await Product.countDocuments({ userId });
+
     res.json({
       stats: {
         totalOrders,
@@ -160,6 +162,7 @@ const getDashboardStats = async (req, res) => {
         lowStockCount,
         averageReview,
         totalReviews: reviews.length,
+        totalProducts,
         trends
       },
       aiReport,

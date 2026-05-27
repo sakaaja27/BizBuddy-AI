@@ -3,7 +3,7 @@ const ScrapedReview = require('../models/ScrapedReview');
 const ReviewAnalytics = require('../models/ReviewAnalytics');
 const { scrapeGoogleReviews, mapApifyToReview } = require('../services/apifyService');
 const { analyzeReviewsWithGemini } = require('../services/geminiService');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+const Groq = require('groq-sdk');
 
 // POST /api/reviews/connect-gmaps
 // User connects their Google Maps listing
@@ -70,8 +70,7 @@ async function scrapeAndAnalyze(req, res) {
     }
 
     // Check cooldown: prevent spam refresh
-    // Min 1 hour between scrapes (DISABLED FOR TESTING)
-    /*
+    // Min 1 hour between scrapes
     if (analytics.lastScrapedAt) {
       const hoursSince = (Date.now() - analytics.lastScrapedAt) / 3600000;
       if (hoursSince < 1) {
@@ -82,7 +81,6 @@ async function scrapeAndAnalyze(req, res) {
         });
       }
     }
-    */
 
     // Update status to scraping
     analytics.scrapeStatus = 'scraping';
@@ -259,10 +257,8 @@ async function getScrapeStatus(req, res) {
 async function generateReply(req, res) {
   try {
     const { reviewId, reviewText, rating, businessName } = req.body;
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
     
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash-lite' });
-
     const prompt = `
 Sebagai pemilik bisnis "${businessName}", buatlah balasan yang profesional, sopan, dan solutif untuk ulasan pelanggan berikut.
 Rating: ${rating} Bintang
@@ -271,11 +267,19 @@ Review: "${reviewText}"
 Balasan harus dalam bahasa Indonesia yang baik, empati (jika ada keluhan), dan tidak bertele-tele. Jangan gunakan markdown atau format tambahan, cukup teks balasannya saja.
 `;
 
-    const result = await model.generateContent(prompt);
-    const reply = result.response.text().trim();
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [{ role: 'user', content: prompt }],
+      model: 'llama-3.1-8b-instant',
+      temperature: 0.5,
+    });
+    
+    const reply = chatCompletion.choices[0]?.message?.content?.trim();
     
     res.json({ reply });
   } catch (error) {
+    if (error.status === 429 || (error.message && error.message.includes('429'))) {
+      return res.status(429).json({ error: 'API limit billing sudah habis' });
+    }
     res.status(500).json({ error: error.message });
   }
 }

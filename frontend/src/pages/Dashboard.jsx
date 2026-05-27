@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Calendar, ShoppingBag, Banknote, AlertTriangle, Star } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import useAuthStore from '../store/useAuthStore';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import StatCard from '../components/dashboard/StatCard';
@@ -52,8 +53,8 @@ const Dashboard = () => {
     );
   }
 
-  // Handle Empty State if needed
-  if (!data || (!data.stats.totalOrders && data.stats.lowStockCount === 0 && data.recentOrders.length === 0)) {
+  // Handle Empty State if needed (if they have absolutely no products)
+  if (!data || data.stats.totalProducts === 0) {
     return (
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center h-[70vh] text-center animate-fade-in">
@@ -62,9 +63,11 @@ const Dashboard = () => {
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Selamat Datang di BizBuddy AI!</h2>
           <p className="text-gray-500 max-w-md mb-8">Dashboard Anda masih kosong. Mari mulai dengan menambahkan produk pertama Anda untuk melihat analitik cerdas kami bekerja.</p>
-          <button className="bg-primary hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-primary/30">
-            Tambah Data Pertama Kamu
-          </button>
+          <Link to="/inventory">
+            <button className="bg-primary hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-primary/30">
+              Tambah Data Pertama Kamu
+            </button>
+          </Link>
         </div>
       </DashboardLayout>
     );
