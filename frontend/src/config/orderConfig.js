@@ -110,15 +110,13 @@ export const ORDER_CONFIG = {
     statusLabels: {
       pending: "Pesanan Masuk",
       processing: "Diproses / Packing 📦",
-      shipped: "Dikirim 🚚",
       done: "Sampai / Selesai ✅",
       cancelled: "Dibatalkan",
       returned: "Retur"
     },
     kanbanColumns: [
       { key: "pending", label: "Pesanan Masuk", color: "orange" },
-      { key: "processing", label: "Packing", color: "yellow" },
-      { key: "shipped", label: "Dikirim", color: "blue" },
+      { key: "processing", label: "Diproses", color: "yellow" },
       { key: "done", label: "Selesai", color: "green" }
     ],
     aiParserHint: "contoh: 'kaos polos putih size L untuk Siti, kirim ke Surabaya via JNE'"
@@ -175,14 +173,12 @@ export const ORDER_CONFIG = {
     notesPlaceholder: "keluhan atau permintaan khusus pelanggan...",
     statusLabels: {
       pending: "Booking Baru",
-      confirmed: "Dikonfirmasi ✅",
       processing: "Sedang Dikerjakan 🔧",
       done: "Selesai",
       cancelled: "Dibatalkan"
     },
     kanbanColumns: [
       { key: "pending", label: "Booking Baru", color: "orange" },
-      { key: "confirmed", label: "Dikonfirmasi", color: "blue" },
       { key: "processing", label: "Dikerjakan", color: "yellow" },
       { key: "done", label: "Selesai", color: "green" }
     ],
@@ -292,17 +288,13 @@ export const ORDER_CONFIG = {
     notesPlaceholder: "detail custom, deadline, atau pesan khusus...",
     statusLabels: {
       pending: "Pesanan Masuk",
-      dp_paid: "DP Diterima 💰",
       processing: "Sedang Dibuat 🎂",
-      ready: "Siap Diambil/Kirim ✅",
       done: "Selesai / Lunas",
       cancelled: "Dibatalkan"
     },
     kanbanColumns: [
       { key: "pending", label: "Pesanan Masuk", color: "orange" },
-      { key: "dp_paid", label: "DP Diterima", color: "gold" },
       { key: "processing", label: "Dibuat", color: "yellow" },
-      { key: "ready", label: "Siap", color: "blue" },
       { key: "done", label: "Selesai", color: "green" }
     ],
     aiParserHint: "contoh: 'brownies custom tulisan Happy Birthday ukuran 22cm untuk Rina, selesai Jumat'"
