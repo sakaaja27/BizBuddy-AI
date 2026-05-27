@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Sparkles, ArrowRight, X } from 'lucide-react';
 
 const AiReportCard = ({ report }) => {
@@ -55,8 +56,8 @@ const AiReportCard = ({ report }) => {
       </div>
 
       {/* Modal Penjelasan Lengkap */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in">
+      {isModalOpen && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm animate-fade-in">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-slide-up">
             <div className="flex justify-between items-center p-5 border-b border-gray-100 bg-gray-50/50">
               <div className="flex items-center gap-3">
@@ -87,7 +88,8 @@ const AiReportCard = ({ report }) => {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
