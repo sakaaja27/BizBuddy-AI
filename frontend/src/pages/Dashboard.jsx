@@ -63,7 +63,7 @@ const Dashboard = () => {
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Selamat Datang di BizBuddy AI!</h2>
           <p className="text-gray-500 max-w-md mb-8">Dashboard Anda masih kosong. Mari mulai dengan menambahkan produk pertama Anda untuk melihat analitik cerdas kami bekerja.</p>
-          <Link to="/inventory">
+          <Link to="/dashboard/inventory">
             <button className="bg-primary hover:bg-orange-600 text-white font-bold py-3 px-8 rounded-xl transition-all shadow-lg shadow-primary/30">
               Tambah Data Pertama Kamu
             </button>
