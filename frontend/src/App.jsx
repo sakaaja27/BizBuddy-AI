@@ -72,7 +72,7 @@ const App = () => {
   }, []);
 
   return (
-    <GoogleOAuthProvider clientId="92963289843-33qgg4dats40jl6mbvlfru5oi1usec6b.apps.googleusercontent.com">
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || "531185067581-6p8gfpbifm8bhnojd6ipqlh79a57462e.apps.googleusercontent.com"}>
       <BrowserRouter>
         <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
         <UpgradeModal
