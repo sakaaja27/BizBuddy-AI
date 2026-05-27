@@ -3,10 +3,13 @@ const Groq = require('groq-sdk');
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
 async function analyzeReviewsWithGemini(reviews, businessName, businessType) {
-  // Prepare reviews text (max 200)
+  // Prepare reviews text (max 40 to fit within 12000 TPM limit of free tier)
   const reviewsText = reviews
-    .slice(0, 200)
-    .map((r) => `[ID: ${r.reviewId}] Rating: ${r.rating}⭐ - ${r.reviewText || 'Tanpa teks'}`)
+    .slice(0, 40)
+    .map((r) => {
+      const text = r.reviewText ? (r.reviewText.length > 150 ? r.reviewText.substring(0, 150) + '...' : r.reviewText) : 'Tanpa teks';
+      return `[ID: ${r.reviewId}] Rating: ${r.rating}⭐ - ${text}`;
+    })
     .join('\n');
 
   const prompt = `
