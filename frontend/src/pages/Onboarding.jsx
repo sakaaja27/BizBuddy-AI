@@ -211,7 +211,7 @@ const Onboarding = () => {
         <a href="#" className="text-sm font-medium text-gray-400 hover:text-gray-600">Butuh bantuan?</a>
       </div>
 
-      <div className="max-w-[640px] mx-auto px-4 pt-8 pb-20 overflow-hidden">
+      <div className={`mx-auto px-4 pt-8 pb-20 overflow-hidden transition-all duration-500 ${step === 3 ? 'max-w-5xl' : 'max-w-[640px]'}`}>
         {/* Progress */}
         <div className="mb-10">
           <div className="text-xs font-bold text-gray-400 mb-3 text-center uppercase tracking-widest">Langkah {step} dari 3</div>
@@ -406,7 +406,7 @@ const Onboarding = () => {
               </div>
 
               {/* CONTENT */}
-              <div className="grid grid-cols-1 xl:grid-cols-[1.15fr_0.85fr] gap-8 items-start mb-12">
+              <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-8 items-start mb-12">
 
                 {/* FORM */}
                 <div className="bg-white p-7 rounded-[32px] border border-gray-100 shadow-sm space-y-6">
@@ -583,7 +583,7 @@ const Onboarding = () => {
                               })
                             }
                             className="
-                              w-2/3 px-5 py-3.5 border border-r-0 border-gray-200
+                              w-3/5 px-5 py-3.5 border border-r-0 border-gray-200
                               rounded-l-2xl outline-none font-semibold
                               focus:border-primary bg-white
                             "
@@ -599,9 +599,9 @@ const Onboarding = () => {
                               })
                             }
                             className="
-                              w-1/3 px-3 py-3.5 border border-gray-200 rounded-r-2xl
+                              w-2/5 pl-3 pr-8 py-3.5 border border-gray-200 rounded-r-2xl
                               outline-none font-semibold bg-gray-50 text-sm
-                              focus:border-primary
+                              focus:border-primary truncate
                             "
                           >
                             {getUnits().map((u) => (
@@ -616,7 +616,7 @@ const Onboarding = () => {
                       {/* MIN STOCK */}
                       <div>
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Stok Minimum Alert
+                          Stok Minimum 
                         </label>
 
                         <input
