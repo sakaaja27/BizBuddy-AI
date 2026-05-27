@@ -6,7 +6,7 @@ async function analyzeReviewsWithGemini(reviews, businessName, businessType) {
   // Prepare reviews text (max 200)
   const reviewsText = reviews
     .slice(0, 200)
-    .map((r, i) => `Review ${i + 1} (${r.rating}⭐): ${r.reviewText || 'Tanpa teks'}`)
+    .map((r) => `[ID: ${r.reviewId}] Rating: ${r.rating}⭐ - ${r.reviewText || 'Tanpa teks'}`)
     .join('\n');
 
   const prompt = `

@@ -132,17 +132,33 @@ async function processScrapeAndAnalyze(businessId, analytics) {
       business.businessType
     );
 
-    // STEP 4: Update sentiment per review
+    // STEP 4: Update sentiment per review (with robust fallback)
+    const sentimentMap = new Map();
     if (analysisResult.reviewSentiments) {
-      for (const rs of analysisResult.reviewSentiments) {
-        await ScrapedReview.findOneAndUpdate(
-          { businessId, reviewId: rs.reviewId },
-          { 
-            sentiment: rs.sentiment,
-            sentimentScore: rs.score 
-          }
-        );
+      analysisResult.reviewSentiments.forEach(rs => {
+        if (rs.reviewId) sentimentMap.set(rs.reviewId, rs);
+      });
+    }
+
+    for (const doc of reviewDocs) {
+      const rs = sentimentMap.get(doc.reviewId);
+      // Fallback: 4-5 is positive, 3 is neutral, 1-2 is negative
+      let finalSentiment = 'neutral';
+      if (rs?.sentiment) {
+        finalSentiment = rs.sentiment.toLowerCase();
+      } else {
+        finalSentiment = doc.rating >= 4 ? 'positive' : doc.rating === 3 ? 'neutral' : 'negative';
       }
+      
+      const finalScore = rs?.score || (doc.rating / 5);
+
+      await ScrapedReview.findOneAndUpdate(
+        { businessId, reviewId: doc.reviewId },
+        { 
+          sentiment: finalSentiment,
+          sentimentScore: finalScore 
+        }
+      );
     }
 
     // STEP 5: Save analytics result
