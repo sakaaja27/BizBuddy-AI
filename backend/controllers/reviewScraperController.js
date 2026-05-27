@@ -70,7 +70,8 @@ async function scrapeAndAnalyze(req, res) {
     }
 
     // Check cooldown: prevent spam refresh
-    // Min 1 hour between scrapes
+    // Min 1 hour between scrapes (DISABLED FOR TESTING)
+    /*
     if (analytics.lastScrapedAt) {
       const hoursSince = (Date.now() - analytics.lastScrapedAt) / 3600000;
       if (hoursSince < 1) {
@@ -81,6 +82,7 @@ async function scrapeAndAnalyze(req, res) {
         });
       }
     }
+    */
 
     // Update status to scraping
     analytics.scrapeStatus = 'scraping';
@@ -140,6 +142,10 @@ async function processScrapeAndAnalyze(businessId, analytics) {
       });
     }
 
+    let positiveCount = 0;
+    let neutralCount = 0;
+    let negativeCount = 0;
+
     for (const doc of reviewDocs) {
       const rs = sentimentMap.get(doc.reviewId);
       // Fallback: 4-5 is positive, 3 is neutral, 1-2 is negative
@@ -152,6 +158,10 @@ async function processScrapeAndAnalyze(businessId, analytics) {
       
       const finalScore = rs?.score || (doc.rating / 5);
 
+      if (finalSentiment === 'positive') positiveCount++;
+      else if (finalSentiment === 'negative') negativeCount++;
+      else neutralCount++;
+
       await ScrapedReview.findOneAndUpdate(
         { businessId, reviewId: doc.reviewId },
         { 
@@ -161,8 +171,14 @@ async function processScrapeAndAnalyze(businessId, analytics) {
       );
     }
 
+    const totalCalculated = positiveCount + neutralCount + negativeCount || 1;
+
     // STEP 5: Save analytics result
-    analytics.sentimentBreakdown = analysisResult.sentimentBreakdown;
+    analytics.sentimentBreakdown = {
+      positive: { count: positiveCount, percentage: Math.round((positiveCount / totalCalculated) * 100) },
+      neutral: { count: neutralCount, percentage: Math.round((neutralCount / totalCalculated) * 100) },
+      negative: { count: negativeCount, percentage: Math.round((negativeCount / totalCalculated) * 100) }
+    };
     analytics.averageRating = analysisResult.averageRating;
     analytics.topPositives = analysisResult.topPositives;
     analytics.topNegatives = analysisResult.topNegatives;

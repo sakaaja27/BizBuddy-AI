@@ -11,9 +11,9 @@ const SentimentChart = ({ data }) => {
   if (!data) return null;
 
   const chartData = [
-    { name: 'Positif (Puas)', value: data.Positif, color: '#FF6B35' },
-    { name: 'Netral (Biasa)', value: data.Netral, color: '#A8B3CF' },
-    { name: 'Saran (Perlu Peningkatan)', value: data.Saran, color: '#FFB347' },
+    { name: 'Positif (Puas)', value: data.positive || 0, color: '#FF6B35' },
+    { name: 'Netral (Biasa)', value: data.neutral || 0, color: '#A8B3CF' },
+    { name: 'Saran (Perlu Peningkatan)', value: data.negative || 0, color: '#FFB347' },
   ].filter(item => item.value > 0);
 
   return (
@@ -50,7 +50,7 @@ const SentimentChart = ({ data }) => {
         
         {/* Center Text */}
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <span className="text-3xl font-extrabold text-gray-900">{data.Positif}%</span>
+          <span className="text-3xl font-extrabold text-gray-900">{data.positive || 0}%</span>
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Positif</span>
         </div>
       </div>

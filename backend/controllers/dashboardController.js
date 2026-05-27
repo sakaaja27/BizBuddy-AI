@@ -2,6 +2,7 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Review = require('../models/Review');
 const Business = require('../models/Business');
+const ReviewAnalytics = require('../models/ReviewAnalytics');
 const Groq = require('groq-sdk');
 
 // Cache in-memory untuk menyimpan laporan AI agar tidak boros token
@@ -61,34 +62,29 @@ const getDashboardStats = async (req, res) => {
     });
     const lowStockCount = lowStockItems.length;
 
-    // 3. Average Review
-    const reviews = await Review.find({ userId });
+    // 3. Average Review & 5. Sentiment Distribution from Review Intelligence
+    const business = await Business.findOne({ userId });
+    const analytics = business ? await ReviewAnalytics.findOne({ businessId: business._id }) : null;
+
     let averageReview = 0;
-    if (reviews.length > 0) {
-      const sum = reviews.reduce((acc, rev) => acc + rev.rating, 0);
-      averageReview = (sum / reviews.length).toFixed(1);
+    let totalReviews = 0;
+    let sentiment = { positive: 0, neutral: 0, negative: 0 };
+
+    if (analytics && analytics.scrapeStatus === 'done') {
+      averageReview = analytics.averageRating || 0;
+      totalReviews = analytics.analyzedCount || analytics.totalReviews || 0;
+      
+      sentiment = {
+        positive: analytics.sentimentBreakdown?.positive?.percentage || 0,
+        neutral: analytics.sentimentBreakdown?.neutral?.percentage || 0,
+        negative: analytics.sentimentBreakdown?.negative?.percentage || 0
+      };
     }
 
     // 4. Recent Orders (last 5)
     const recentOrders = await Order.find({ userId })
       .sort({ createdAt: -1 })
       .limit(5);
-
-    // 5. Sentiment Distribution
-    const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
-    reviews.forEach(rev => {
-      if (sentimentCounts[rev.sentiment] !== undefined) {
-        sentimentCounts[rev.sentiment]++;
-      }
-    });
-
-    // Calculate percentages
-    const totalReviews = reviews.length || 1; // avoid division by zero
-    const sentiment = {
-      positive: Math.round((sentimentCounts.positive / totalReviews) * 100),
-      neutral: Math.round((sentimentCounts.neutral / totalReviews) * 100),
-      negative: Math.round((sentimentCounts.negative / totalReviews) * 100),
-    };
 
     // 6. Stock Status List
     const allProducts = await Product.find({ userId }).sort({ stock: 1 }).limit(4);
@@ -161,7 +157,7 @@ const getDashboardStats = async (req, res) => {
         revenueToday,
         lowStockCount,
         averageReview,
-        totalReviews: reviews.length,
+        totalReviews,
         totalProducts,
         trends
       },

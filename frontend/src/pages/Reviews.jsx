@@ -187,6 +187,7 @@ const Reviews = () => {
   };
 
   const handleRefreshClick = () => {
+    /* (DISABLED FOR TESTING)
     if (analytics?.lastScrapedAt) {
       const hoursSince = (Date.now() - new Date(analytics.lastScrapedAt).getTime()) / 3600000;
       if (hoursSince < 1) {
@@ -195,6 +196,7 @@ const Reviews = () => {
         return;
       }
     }
+    */
     setShowConfirmRefresh(true);
   };
 

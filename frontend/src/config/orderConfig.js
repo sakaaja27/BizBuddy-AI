@@ -39,14 +39,12 @@ export const ORDER_CONFIG = {
     statusLabels: {
       pending: "Pesanan Baru",
       processing: "Sedang Dimasak 👨‍🍳",
-      ready: "Siap Disajikan ✅",
       done: "Selesai",
       cancelled: "Dibatalkan"
     },
     kanbanColumns: [
       { key: "pending", label: "Pesanan Baru", color: "orange" },
       { key: "processing", label: "Dimasak", color: "yellow" },
-      { key: "ready", label: "Siap Saji", color: "blue" },
       { key: "done", label: "Selesai", color: "green" }
     ],
     aiParserHint: "contoh: '2 nasi goreng spesial untuk Budi meja 5, 1 es teh manis'"
